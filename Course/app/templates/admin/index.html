@@ -1,0 +1,129 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mt-4">🚀 LMS Dashboard</h1>
+            <p class="text-muted">Hệ thống quản lý học tập tích hợp AI</p>
+            <hr>
+        </div>
+    </div>
+
+    <!-- Thống kê nhanh từ Database -->
+    <div class="row">
+        <!-- Tổng khóa học -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Tổng Khóa học</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_courses|default(0) }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-book-open fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tổng học viên -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Tổng Học viên</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_students|default(0) }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-graduate fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tổng doanh thu -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Doanh thu</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ "{:,.0f}".format(stats.total_revenue|default(0)) }} VNĐ
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Đăng ký gần đây -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Đăng ký mới nhất</h6>
+                </div>
+                <div class="card-body">
+                    {% if stats.recent_enrollments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Học viên</th>
+                                    <th>Khóa học</th>
+                                    <th>Ngày đăng ký</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for e in stats.recent_enrollments %}
+                                <tr>
+                                    <td><strong>{{ e.student.full_name }}</strong></td>
+                                    <td><span class="badge badge-primary">{{ e.course.title }}</span></td>
+                                    <td>{{ e.enrolled_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted">Chưa có lượt đăng ký nào.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Thao tác nhanh -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Thao tác nhanh</h6>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('course.create_view') }}" class="btn btn-primary btn-block mb-2 text-left">
+                        <i class="fas fa-plus-circle mr-2"></i> Thêm Khóa Học Mới
+                    </a>
+                    <a href="{{ url_for('user.index_view') }}" class="btn btn-info btn-block mb-2 text-left">
+                        <i class="fas fa-users-cog mr-2"></i> Quản lý Người dùng
+                    </a>
+                    <a href="{{ url_for('category.index_view') }}" class="btn btn-secondary btn-block text-left">
+                        <i class="fas fa-list mr-2"></i> Quản lý Danh mục
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Thêm FontAwesome để hiển thị icon nếu master.html chưa có -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %}

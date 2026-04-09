@@ -1,0 +1,39 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<!-- Banner Hero -->
+<div class="p-5 mb-5 rounded-4 shadow-sm mt-4 text-white" style="background: linear-gradient(135deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);">
+    <div class="container-fluid py-5 text-center text-md-start">
+        <h1 class="display-4 fw-bold">Học kỹ năng mới mỗi ngày</h1>
+        <p class="col-md-8 fs-4 opacity-90">Hệ thống học tập thông minh tích hợp AI hỗ trợ lộ trình cá nhân hóa.</p>
+        <div class="mt-4">
+            <a href="#courses" class="btn btn-light btn-lg fw-bold text-primary me-2 shadow">Khám phá ngay</a>
+        </div>
+    </div>
+</div>
+
+<div class="container" id="courses">
+    <h3 class="fw-bold text-dark mb-4">Khóa học nổi bật</h3>
+    <div class="row">
+        {% for c in courses %}
+        <div class="col-md-4 col-lg-3 mb-4">
+            <div class="card h-100 border-0 shadow-sm hover-shadow">
+                <img src="{{ c.thumbnail_url or 'https://via.placeholder.com/300x200' }}" class="card-img-top" style="height: 160px; object-fit: cover;">
+                <div class="card-body">
+                    <h6 class="card-title fw-bold">{{ c.title }}</h6>
+                    <p class="text-muted small">Giảng viên: {{ c.instructor.full_name }}</p>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="text-primary fw-bold">{{ "{:,.0f}".format(c.price) }} đ</span>
+                        <a href="/course/{{ c.id }}" class="btn btn-sm btn-outline-primary rounded-pill">Chi tiết</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <p class="text-muted">Chưa có khóa học nào. Hãy thêm trong Admin!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

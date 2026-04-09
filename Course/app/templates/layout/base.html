@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hệ thống học tập EDU-AI{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .hover-shadow:hover {
+            transform: translateY(-5px);
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+        body { background-color: #f8f9fa; }
+    </style>
+</head>
+<body>
+    {% include 'layout/header.html' %}
+
+    <div class="container min-vh-100">
+        {% block content %}{% endblock %}
+    </div>
+
+    {% include 'layout/footer.html' %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

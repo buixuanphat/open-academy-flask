@@ -1,0 +1,14 @@
+{% extends 'admin/base.html' %}
+
+{% block head_css %}
+    {{ super() }}
+    <!-- Thêm CSS custom nếu muốn -->
+    <style>
+        .navbar-brand { font-weight: bold; color: #2c3e50 !important; }
+        .admin-sidebar { background: #f8f9fa; min-height: 100vh; }
+    </style>
+{% endblock %}
+
+{% block brand_name %}
+    <span class="lms-logo">🚀 LMS AI Admin</span>
+{% endblock %}
