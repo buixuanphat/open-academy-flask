@@ -1,9 +1,242 @@
 body {
-    font-family: Tahoma
+    font-family: Calibri, serif;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+
+/*TEXT*/
+.title {
+    font-size: 4rem;
+    font-weight: bold;
+}
+
+.medium {
+    font-size: 1.5rem;
 }
 
 
-h1.title {
-    font-size: 50px;
+/*BUTTON*/
+.positive-button {
+    width: 100%;
+    display: inline-block;
+    text-decoration: none;
+    color: white;
+    background-color: #81A6C6;
+    border-radius: 0.5rem;
+    font-size: 1.5rem;
     font-weight: bold;
+    padding: 1rem 2rem;
+    transition: 0.3s;
+    cursor: pointer;
+    text-align: center;
+    border-width: 0;
+}
+
+.positive-button-outline:hover {
+    background-color: #AACDDC;
+    transform: translateY(-2px);
+}
+
+
+.positive-button-outline {
+    width: 100%;
+    display: inline-block;
+    text-decoration: none;
+    color: #81A6C6;
+    background-color: #fff;
+    border-radius: 0.5rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 1rem 2rem;
+    transition: 0.3s;
+    cursor: pointer;
+    text-align: center;
+    border-width: 2px;
+    border-color: #81A6C6;
+    border-style: solid;
+}
+
+.positive-button:hover {
+    background-color: #5d8aa8;
+    transform: translateY(-2px);
+}
+
+
+
+/*TEXT INPUT*/
+.text-input {
+    width: 100%;
+    display: block;
+    background-color: #F3F4F4;
+    border: 2px solid transparent;
+    border-radius: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: normal;
+    padding: 0.8rem 1.2rem;
+    transition: all 0.3s ease;
+    outline: none;
+    color: #333;
+}
+
+.text-input:focus {
+    background-color: #ffffff;
+    border-color: #81A6C6;
+    box-shadow: 0 0 8px rgba(129, 166, 198, 0.2);
+}
+
+.text-area {
+    width: 100%;
+    display: block;
+    background-color: #F3F4F4;
+    border: 2px solid transparent;
+    border-radius: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: normal;
+    padding: 0.8rem 1.2rem;
+    transition: all 0.3s ease;
+    outline: none;
+    color: #333;
+}
+
+.text-area:focus {
+    background-color: #ffffff;
+    border-color: #81A6C6;
+    box-shadow: 0 0 8px rgba(129, 166, 198, 0.2);
+}
+
+
+.main-wrapper {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.info-section, .form-section {
+    flex: 1;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.info-section {
+    background-color: #81A6C6;
+    color: white;
+}
+
+.form-section {
+    flex: 1;
+    width: 100%;
+    background-color: white;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 20px;
+}
+
+.feature-item i {
+    color: #ffffff;
+    font-size: 1.5rem;
+}
+
+.feature-item p {
+    margin: 0;
+    color: white;
+}
+
+
+
+/*FOOTER*/
+.footer {
+    background-color: #000;
+    color: #fff;
+    padding: 60px 20px;
+    font-family: Arial, sans-serif;
+}
+
+.footer-container {
+    display: flex;
+    justify-content: space-around;
+    max-width: 1200px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+}
+
+.footer-col {
+    flex: 1;
+    min-width: 200px;
+    margin-bottom: 20px;
+}
+
+.footer-col h3 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.footer-col ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-col ul li {
+    margin-bottom: 12px;
+}
+
+.footer-col ul li a {
+    color: #aaa;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s;
+}
+
+.footer-col ul li a:hover {
+    color: #fff;
+}
+
+
+/*TRANG ĐĂNG KÝ, ĐĂNG NHẬP*/
+.preview-img {
+    max-width: 150px;
+    max-height: 150px;
+    border-radius: 8px;
+    margin-top: 10px;
+    display: none;
+    object-fit: cover;
+}
+
+.degree-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #dee2e6;
+    position: relative;
+}
+
+.degree-preview-img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 4px;
+    display: none;
+    margin-top: 10px;
+}
+
+.btn-remove-degree {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+#degree-container iframe {
+    display: block;
+    background-color: #eee;
+    border-radius: 4px;
 }

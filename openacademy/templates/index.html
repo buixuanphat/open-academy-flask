@@ -1,12 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet" />
-</head>
-<body>
-    <h1 class="title" >test</h1>
-    <h1>test</h1>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Trang Chủ{% endblock %}
+{% block content %}
+   <div class="container mt-5 text-center">
+    <h1 class="title mb-4">Open Academy</h1>
+
+    <div class="selection-wrapper p-5 border rounded bg-light shadow-sm">
+        <h2 class="medium mb-4">Bạn là?</h2>
+
+        <div class="row justify-content-center g-3">
+            <div class="col-md-5">
+                <a class="positive-button-outline w-100 d-block py-3" href="{{ url_for('lecturer_register') }}">
+                    Tôi là Giảng viên
+                </a>
+            </div>
+            <div class="col-md-5">
+                <a class="positive-button-outline w-100 d-block py-3" href="{{ url_for('student_register') }}">
+                    Tôi là Học viên
+                </a>
+            </div>
+        </div>
+
+        <hr class="my-5">
+
+        <div class="login-section">
+            <h2 class="medium">Đã có tài khoản?</h2>
+            <a class="positive-button px-5" href="{{ url_for('login') }}">
+                Đăng nhập ngay
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
