@@ -70,3 +70,34 @@ def check_login(email, password):
 
 def get_user_by_id(user_id):
     return User.query.get(user_id)
+
+
+def load_categories():
+    # Sắp xếp theo tên cho người dùng dễ tìm
+    return Category.query.order_by(Category.name.asc()).all()
+
+def load_lecturers():
+    # Thường mình sẽ lấy giảng viên đang hoạt động
+    # Bạn có thể join với bảng User để lấy tên (first_name, last_name)
+    return Lecturer.query.filter(Lecturer.active == True).all()
+
+
+def load_courses(kw=None, category_id=None, lecturer_id=None, goal=None, level=None):
+    query = Course.query
+
+    if kw:
+        query = query.filter(Course.title.contains(kw))
+
+    if category_id:
+        query = query.filter(Course.category_id == category_id)
+
+    if lecturer_id:
+        query = query.filter(Course.lecturer_id == lecturer_id)
+
+    if goal:
+        query = query.filter(Course.goal == goal)
+
+    if level:
+        query = query.filter(Course.level == level)
+
+    return query.all()

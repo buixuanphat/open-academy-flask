@@ -141,7 +141,25 @@ def login():
 
 @app.route('/courses', methods=['GET'])
 def load_courses():
-    return render_template('courses.html')
+    # Lấy dữ liệu từ tham số URL (?kw=...&category_id=...)
+    kw = request.args.get('kw')
+    category_id = request.args.get('category_id')
+    lecturer_id = request.args.get('lecturer_id')
+    goal = request.args.get('goal')
+    level = request.args.get('level')
+
+    courses = utils.load_courses(kw, category_id, lecturer_id, goal, level)
+
+    # Cần truyền thêm list categories, lecturers, enums để hiển thị trong <select>
+    categories = utils.load_categories()
+    lecturers = utils.load_lecturers()  # Tự viết thêm hàm lấy list này nhé
+
+    return render_template('courses.html',
+                           courses=courses,
+                           categories=categories,
+                           lecturers=lecturers,
+                           goals=models.StudyGoal,
+                           levels=models.StudentLevel)
 
 
 if __name__ == '__main__':

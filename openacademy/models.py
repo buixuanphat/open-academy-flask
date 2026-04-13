@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Double
 from sqlalchemy.sql.sqltypes import Enum
 from sqlalchemy.orm import relationship
 from openacademy import db
@@ -14,6 +14,7 @@ class BaseModel(db.Model):
 class Category(BaseModel):
     __tablename__ = 'category'
     name = Column(String(50), nullable=False, unique=True)
+    courses = relationship("Course", backref="category", lazy=True)
 
     def __str__(self):
         return self.name
@@ -67,6 +68,7 @@ class Lecturer(User):
     bio = Column(String(200), nullable=False)
     status = Column(Enum(Status), nullable=False, default=Status.PENDING)
     degrees = relationship("Degree", backref="lecturer", lazy='joined')
+    courses = relationship("Course", backref="lecturer", lazy=True)
 
     __mapper_args__ = {
         'polymorphic_identity': UserRole.LECTURER,
@@ -87,6 +89,17 @@ class Student(User):
     __mapper_args__ = {
         'polymorphic_identity': UserRole.STUDENT,
     }
+
+class Course(BaseModel):
+    __tablename__ = 'course'
+    title = Column(String(100), nullable=False)
+    description = Column(String(200), nullable=False)
+    price = Column(Double, nullable=False)
+    image = Column(String(200), nullable=False)
+    category_id = Column(Integer, ForeignKey('category.id'), nullable=False)
+    lecturer_id = Column(Integer, ForeignKey('lecturer.id'), nullable=False)
+    goal = Column(Enum(StudyGoal), nullable=False)
+    level = Column(Enum(StudentLevel), nullable=False)
 
 if __name__ == '__main__':
     with app.app_context():
