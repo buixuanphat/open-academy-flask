@@ -3,6 +3,8 @@ from flask_login import login_user
 
 from openacademy import app, utils, models, login
 import cloudinary.uploader
+
+from openacademy.models import UserRole
 from openacademy.utils import add_lecturer, add_student
 
 
@@ -122,17 +124,24 @@ def user_load(user_id):
 def login():
     err_msg = ''
     if request.method.__eq__('POST'):
-        username = request.form.get('username')
+        email = request.form.get('email')
         password = request.form.get('password')
 
-        user = utils.check_login(username=username, password=password)
+        user = utils.check_login(email=email, password=password)
         if user:
             login_user(user=user)
-            return redirect(url_for('index'))
+            if user.role.__eq__(UserRole.STUDENT):
+                return redirect(url_for('load_courses'))
+            return redirect(url_for('home'))
         else:
-            err_msg = 'Username hoac password KHONG chinh xac!!!'
+            err_msg = 'Email hoặc mật khẩu không chính xác'
 
     return render_template('login.html', err_msg=err_msg)
+
+
+@app.route('/courses', methods=['GET'])
+def load_courses():
+    return render_template('courses.html')
 
 
 if __name__ == '__main__':

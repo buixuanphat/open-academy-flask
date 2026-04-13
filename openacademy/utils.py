@@ -61,11 +61,11 @@ def add_student(last_name, first_name, email, password, avatar, goal, level):
         return None
 
 
-def check_login(username, password):
-    if username and password:
+def check_login(email, password):
+    if email and password:
         password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
 
-        return User.query.filter(User.username.__eq__(username.strip()),
+        return User.query.filter(User.email.__eq__(email.strip()),
                                  User.password.__eq__(password)).first()
 
 def get_user_by_id(user_id):
