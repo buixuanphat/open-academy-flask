@@ -1,0 +1,45 @@
+{% extends "layout/base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Chỉnh sửa khóa học: {{ course.title }}</h5>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('instructor.edit_course', course_id=course.id) }}" method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label class="form-label">Tên khóa học</label>
+                    <input type="text" name="title" class="form-control" value="{{ course.title }}" required>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Danh mục</label>
+                        <select name="category_id" class="form-select">
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if cat.id == course.category_id %}selected{% endif %}>{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Giá bán (VNĐ)</label>
+                        <input type="number" name="price" class="form-control" value="{{ course.price }}">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mô tả</label>
+                    <textarea name="description" class="form-control" rows="5">{{ course.description }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ảnh bìa hiện tại</label><br>
+                    <img src="{{ course.image_url }}" class="rounded mb-2" style="width: 200px;">
+                    <input type="file" name="thumbnail" class="form-control">
+                </div>
+                <div class="text-end">
+                    <a href="{{ url_for('instructor.dashboard') }}" class="btn btn-light">Hủy</a>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

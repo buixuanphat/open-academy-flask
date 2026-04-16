@@ -1,0 +1,36 @@
+{% extends "layout/base.html" %}
+{% block title %}Đăng ký{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow p-4 border-0">
+            <h3 class="text-center mb-4 fw-bold">Tạo Tài Khoản</h3>
+            <form method="POST" action="{{ url_for('auth.register') }}">
+                <div class="mb-3">
+                    <label class="form-label">Tên hiển thị</label>
+                    <input type="text" name="username" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mật khẩu</label>
+                    <input type="password" name="password" class="form-control" required minlength="6">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Vai trò</label>
+                    <select name="role" class="form-select">
+                        <option value="STUDENT">Học viên</option>
+                        <option value="INSTRUCTOR">Giảng viên</option>
+                    </select>
+                </div>
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-success">Đăng ký ngay</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

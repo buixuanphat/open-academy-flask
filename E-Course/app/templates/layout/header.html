@@ -1,0 +1,47 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{{ url_for('student.course_list') }}">
+            <i class="bi bi-mortarboard-fill"></i> E-Learning
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('student.course_list') }}">Khám phá</a>
+                </li>
+                {% if current_user.is_authenticated %}
+                    {% if current_user.role.value == 'student' %}
+                        <li class="nav-item"><a class="nav-link" href="#">Khóa học của tôi</a></li>
+                    {% elif current_user.role.value == 'instructor' %}
+                        <li class="nav-item"><a class="nav-link text-warning" href="{{ url_for('instructor.dashboard') }}">Quản lý bài giảng</a></li>
+                    {% endif %}
+                {% endif %}
+            </ul>
+
+            <ul class="navbar-nav ms-auto">
+                {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-white" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            Chào, {{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">Hồ sơ cá nhân</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">Đăng xuất</a></li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">Đăng nhập</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-primary btn-sm mt-1 ms-lg-2 px-3 rounded-pill" href="{{ url_for('auth.register') }}">Đăng ký</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
