@@ -1,27 +1,25 @@
 {% extends "layout/base.html" %}
-{% block title %}Đăng nhập{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-4">
-        <div class="card shadow p-4 border-0">
-            <h3 class="text-center mb-4 fw-bold">Đăng Nhập</h3>
-            <form method="POST" action="{{ url_for('auth.login') }}">
-    <div class="mb-3">
-        <label class="form-label">Tên đăng nhập</label>
-        <input type="text" name="username" class="form-control" placeholder="Nhập tên đăng nhập của bạn" required>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Mật khẩu</label>
-        <input type="password" name="password" class="form-control" placeholder="******" required>
-    </div>
-    <div class="d-grid gap-2 mt-4">
-        <button type="submit" class="btn btn-primary">Đăng Nhập</button>
-    </div>
-</form>
-            <hr>
-            <p class="text-center">Chưa có tài khoản? <a href="{{ url_for('auth.register') }}">Đăng ký</a></p>
-        </div>
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="card border-0 shadow-sm p-4" style="width: 100%; max-width: 400px; border: 1px solid #eee !important;">
+        <h2 class="fw-bold text-uppercase mb-4 text-center" style="letter-spacing: 2px;">Đăng nhập</h2>
+
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-uppercase">Email</label>
+                <input type="email" name="email" class="form-control rounded-0 border-dark shadow-none" required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label small fw-bold text-uppercase">Mật khẩu</label>
+                <input type="password" name="password" class="form-control rounded-0 border-dark shadow-none" required>
+            </div>
+            <button type="submit" class="btn btn-dark w-100 rounded-0 fw-bold py-2 text-uppercase">Đăng nhập</button>
+        </form>
+
+        <p class="mt-4 text-center small text-muted">
+            Chưa có tài khoản? <a href="{{ url_for('auth.register') }}" class="text-dark fw-bold">Đăng ký ngay</a>
+        </p>
     </div>
 </div>
 {% endblock %}

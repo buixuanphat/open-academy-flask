@@ -1,36 +1,40 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-from config import Config
-import cloudinary
 
-# Khởi tạo DB nhưng chưa gắn với app ngay (để tránh lỗi vòng lặp)
 db = SQLAlchemy()
-login_manager = LoginManager()
+login = LoginManager()
+login.login_view = 'auth.login'
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(Config)
+    app.config.from_object('config.Config')
 
     db.init_app(app)
-    login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
+    login.init_app(app)
 
-    # --- ĐÂY LÀ ĐOẠN QUAN TRỌNG BẠN ĐANG THIẾU ---
-    from .models import User
 
-    @login_manager.user_loader
-    def load_user(user_id):
-        # Flask-Login lưu ID trong session là chuỗi, cần chuyển sang int để tìm trong DB
-        return User.query.get(int(user_id))
-    # --------------------------------------------
+    # Đăng ký Blueprints
+    from app.routes.auth import bp as auth_bp
+    app.register_blueprint(auth_bp)
 
-    cloudinary.config(**app.config['CLOUDINARY_CONFIG'])
+    from app.routes.student import bp as student_bp
+    app.register_blueprint(student_bp, url_prefix='/student')
 
-    from .routes.auth import auth_bp
-    from .routes.student import student_bp
-    app.register_blueprint(auth_bp, url_prefix='/auth')
-    app.register_blueprint(student_bp)
-    from app.routes.instructor import instructor_bp
-    app.register_blueprint(instructor_bp)
+    from app.routes.lecturer import lecturer_bp
+    app.register_blueprint(lecturer_bp, url_prefix='/lecturer')
+
+    @app.template_filter('format_number')
+    def format_number(value):
+        if value is None:
+            return "0"
+        return "{:,}".format(value).replace(",", ".")
+
     return app
+
+@login.user_loader
+def load_user(user_id):
+    # PHẢI import cả Student và Lecturer ở đây
+    # để SQLAlchemy biết cách chuyển đổi (cast) từ User sang subclass
+    from app.models import User, Student, Lecturer
+    return User.query.get(int(user_id))

@@ -1,0 +1,76 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Quản lý khóa học đang giảng dạy</h2>
+            <p class="text-muted">Xem, chỉnh sửa và theo dõi các khóa học bạn đang phụ trách</p>
+        </div>
+        <a href="{{ url_for('lecturer.create_course') }}" class="btn btn-dark">+ Tạo khóa học mới</a>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm border-0 bg-dark text-white">
+                <small>Tổng khóa học</small>
+                <h3 class="fw-bold">{{ total_courses }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm border-0">
+                <small>Đang hoạt động</small>
+                <h3 class="fw-bold">{{ active_courses }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm border-0">
+                <small>Tổng học viên</small>
+                <h3 class="fw-bold">{{ total_students | format_number }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">KHÓA HỌC</th>
+                        <th>DANH MỤC</th>
+                        <th>HỌC VIÊN</th>
+                        <th>TRẠNG THÁI</th>
+                        <th>THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in pagination.items %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ course.image }}" class="rounded me-3" width="60" alt="Thumbnail">
+                                <div>
+                                    <div class="fw-bold">{{ course.title }}</div>
+                                    <small class="text-muted">{{ course.sections|length }} chương</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ course.category.name }}</td>
+                        <td>{{ course.enrollments|length }}</td>
+                        <td>
+                            <span class="badge {% if course.status.value == 'active' %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %}">
+                                {{ course.status.value | capitalize }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="#" class="btn btn-sm btn-dark">Chỉnh sửa</a>
+                            <button class="btn btn-sm btn-outline-danger">Xóa</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

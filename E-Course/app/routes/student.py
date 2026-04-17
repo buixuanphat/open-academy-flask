@@ -1,11 +1,25 @@
-from flask import Blueprint, render_template
-from app.models import Course
+from flask import Blueprint, render_template, request
+from app.models import Course, Category
 
-student_bp = Blueprint('student', __name__)
+bp = Blueprint('student', __name__)
 
-# app/routes/student.py
 
-@student_bp.route('/')
-def course_list(): # Tên hàm này phải khớp với url_for('student.course_list')
-    courses = Course.query.all()
-    return render_template('student/course_list.html', courses=courses)
+@bp.route('/')
+def index():
+    # Lấy từ khóa tìm kiếm nếu có
+    q = request.args.get('q')
+    cate_id = request.args.get('category_id')
+
+    query = Course.query
+
+    if q:
+        query = query.filter(Course.title.contains(q))
+    if cate_id:
+        query = query.filter(Course.category_id == cate_id)
+
+    courses = query.all()
+    categories = Category.query.all()
+
+    return render_template('student/course_list.html',
+                           courses=courses,
+                           categories=categories)

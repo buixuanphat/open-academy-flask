@@ -1,251 +1,201 @@
-from datetime import datetime, timezone
-
-import enum
-
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, DateTime, Text, Enum as SQLEnum
-
+from datetime import datetime
+from sqlalchemy import (
+    Column, Integer, String, Float, Boolean,
+    DateTime, ForeignKey, UniqueConstraint, Enum, Text
+)
 from sqlalchemy.orm import relationship
-
+from enum import Enum as PyEnum
 from flask_login import UserMixin
+from app import db
 
-from app import db  # Import db từ app/__init__.py
+# ==================== BASE ====================
 
+class BaseModel(db.Model):
+    __abstract__ = True
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_date = Column(DateTime, default=datetime.now)
 
+# ==================== ENUM ====================
 
-
-
-# ==================== ENUMS ====================
-
-
-
-class UserRole(enum.Enum):
-
+class UserRole(PyEnum):
+    USER = "user"
+    ADMIN = "admin"
+    LECTURER = "lecturer"
     STUDENT = "student"
 
-    INSTRUCTOR = "instructor"
+class StudyGoal(PyEnum):
+    UPSKILL = "upskill"
+    CAREER_CHANGE = "career_change"
+    CERTIFICATION = "certification"
+    RESEARCH = "research"
+    HOBBY = "hobby"
 
-    ADMIN = "admin"
+class StudentLevel(PyEnum):
+    BEGINNER = "beginner"
+    INTERMEDIATE = "intermediate"
+    ADVANCED = "advanced"
+    EXPERT = "expert"
 
+class Status(PyEnum):
+    PENDING = "pending"
+    VERIFIED = "verified"
+    REJECTED = "rejected"
 
+class CourseStatus(PyEnum):
+    DRAFT = "draft"
+    PENDING = "pending"
+    ACTIVE = "active"
+    CLOSED = "closed"
+# ==================== USER ====================
 
+class User(BaseModel, UserMixin):
+    __tablename__ = 'user'
+    first_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
+    email = Column(String(50), unique=True, nullable=False)
+    password = Column(String(200), nullable=False)
+    avatar = Column(String(200))
+    active = Column(Boolean, default=True)
+    role = Column(Enum(UserRole), nullable=False)
 
+    comments = relationship("Comment", backref="user", lazy=True)
+    ratings = relationship("Rating", backref="user", lazy=True)
 
-class LessonType(enum.Enum):
+    __mapper_args__ = {
+        'polymorphic_identity': UserRole.USER,  # dùng .value để DB lưu chuỗi "user"
+        'polymorphic_on': role
+    }
 
-    VIDEO = "video"
-
-    TEXT = "text"
-
-
-
-
-
-# ==================== MODELS ====================
-
-
-
-class User(db.Model, UserMixin):
-
-    """Yêu cầu 1: Quản lý người dùng"""
-
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True)
-
-    username = Column(String(50), unique=True, nullable=False)
-
-    email = Column(String(100), unique=True, nullable=False)
-
-    password_hash = Column(String(255), nullable=False)
-
-    role = Column(SQLEnum(UserRole), default=UserRole.STUDENT)
-
-
-
-    # Relationships
-
-    enrollments = relationship("Enrollment", backref="student")
-
-    questions = relationship("Question", backref="author")
-
-    answers = relationship("Answer", backref="author")
-
-    lesson_progress = relationship("LessonProgress", backref="student")
+    def __str__(self):
+        return f"{self.last_name} {self.first_name}"
 
 
+class Lecturer(User):
+    __tablename__ = 'lecturer'
+    id = Column(Integer, ForeignKey('user.id'), primary_key=True)
+    bio = Column(String(500), nullable=False)
+    status = Column(Enum(Status), default=Status.PENDING)
+
+    degrees = relationship("Degree", backref="lecturer", lazy=True, cascade="all, delete-orphan")
+    courses = relationship("Course", backref="lecturer", lazy=True)
+
+    __mapper_args__ = {'polymorphic_identity': UserRole.LECTURER}
 
 
+class Student(User):
+    __tablename__ = 'student'
+    id = Column(Integer, ForeignKey('user.id'), primary_key=True)
+    goal = Column(Enum(StudyGoal), nullable=False)
+    level = Column(Enum(StudentLevel), nullable=False)
 
-class Category(db.Model):
+    enrollments = relationship("Enrollment", backref="student", lazy=True, cascade="all, delete-orphan")
+    progresses = relationship("Progress", backref="student", lazy=True, cascade="all, delete-orphan")
 
-    """Danh mục khoá học"""
+    __mapper_args__ = {'polymorphic_identity': UserRole.STUDENT}
 
-    __tablename__ = "categories"
+# ==================== CATEGORY & COURSE ====================
 
-    id = Column(Integer, primary_key=True)
-
-    name = Column(String(100), unique=True, nullable=False)
-
-    courses = relationship("Course", backref="category")
-
-
-
-
-
-class Course(db.Model):
-
-    """Yêu cầu 1 & 4: Thông tin & Quản lý nội dung"""
-
-    __tablename__ = "courses"
-
-    id = Column(Integer, primary_key=True)
-
-    title = Column(String(200), nullable=False)
-
-    description = Column(Text)
-
-    image_url = Column(String(255))  # Thêm để lưu ảnh từ Cloudinary
-
-    price = Column(Float, default=0.0)
-
-    category_id = Column(Integer, ForeignKey("categories.id"))
-
-    instructor_id = Column(Integer, ForeignKey("users.id"))
+class Category(BaseModel):
+    __tablename__ = 'category'
+    name = Column(String(50), unique=True, nullable=False)
+    courses = relationship("Course", backref="category", lazy=True)
 
 
+class Course(BaseModel):
+    __tablename__ = 'course'
+    title = Column(String(100), nullable=False)
+    description = Column(Text, nullable=False)
+    price = Column(Float, nullable=False, default=0.0)
+    status = Column(Enum(CourseStatus), default=CourseStatus.DRAFT)
+    image = Column(String(200), nullable=False)
 
-    # Relationships
+    category_id = Column(Integer, ForeignKey('category.id'), nullable=False)
+    lecturer_id = Column(Integer, ForeignKey('lecturer.id'), nullable=False)
+
+    goal = Column(Enum(StudyGoal), nullable=False)
+    level = Column(Enum(StudentLevel), nullable=False)
 
     sections = relationship("Section", backref="course", cascade="all, delete-orphan")
-
-    enrollments = relationship("Enrollment", backref="course")
-
-    questions = relationship("Question", backref="course")
+    enrollments = relationship("Enrollment", backref="course", lazy=True)
+    ratings = relationship("Rating", backref="course", lazy=True, cascade="all, delete-orphan")
 
 
-
-
-
-class Section(db.Model):
-
-    """Yêu cầu 4: Chương học"""
-
-    __tablename__ = "sections"
-
-    id = Column(Integer, primary_key=True)
-
-    course_id = Column(Integer, ForeignKey("courses.id"))
-
-    title = Column(String(200))
-
+class Section(BaseModel):
+    __tablename__ = 'section'
+    title = Column(String(100), nullable=False)
+    course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
     lessons = relationship("Lesson", backref="section", cascade="all, delete-orphan")
 
 
+class Lesson(BaseModel):
+    __tablename__ = 'lesson'
+    title = Column(String(100), nullable=False)
+    content = Column(Text, nullable=False)
+    video = Column(String(200))
+    order_index = Column(Integer, nullable=False)
+    section_id = Column(Integer, ForeignKey('section.id'), nullable=False)
 
+    comments = relationship("Comment", backref="lesson", lazy=True, cascade="all, delete-orphan")
+    progresses = relationship("Progress", backref="lesson", lazy=True)
 
+# ==================== INTERACTION & PROGRESS ====================
 
-class Lesson(db.Model):
-
-    """Yêu cầu 4: Bài học chi tiết"""
-
-    __tablename__ = "lessons"
-
-    id = Column(Integer, primary_key=True)
-
-    section_id = Column(Integer, ForeignKey("sections.id"))
-
-    title = Column(String(200))
-
-    content_url = Column(String(255))
-
-    lesson_type = Column(SQLEnum(LessonType), default=LessonType.VIDEO)
-
-    order = Column(Integer, default=0)
-
-
-
-
-
-class Enrollment(db.Model):
-
-    """Yêu cầu 2: Đăng ký và Thanh toán"""
-
-    __tablename__ = "enrollments"
-
-    id = Column(Integer, primary_key=True)
-
-    student_id = Column(Integer, ForeignKey("users.id"))
-
-    course_id = Column(Integer, ForeignKey("courses.id"))
-
+class Enrollment(BaseModel):
+    __tablename__ = 'enrollment'
+    student_id = Column(Integer, ForeignKey('student.id'), nullable=False)
+    course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
+    total_payment = Column(Float, nullable=False)
     payment_status = Column(Boolean, default=False)
 
-    paid_amount = Column(Float, default=0.0)
-
-    enrolled_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    __table_args__ = (UniqueConstraint('student_id', 'course_id', name='unique_student_course'),)
 
 
-
-
-
-class LessonProgress(db.Model):
-
-    """Yêu cầu 3: Theo dõi tiến độ học tập"""
-
-    __tablename__ = "lesson_progress"
-
-    id = Column(Integer, primary_key=True)
-
-    student_id = Column(Integer, ForeignKey("users.id"))
-
-    lesson_id = Column(Integer, ForeignKey("lessons.id"))
-
+class Progress(BaseModel):
+    __tablename__ = 'progress'
+    student_id = Column(Integer, ForeignKey('student.id'), nullable=False)
+    lesson_id = Column(Integer, ForeignKey('lesson.id'), nullable=False)
     is_completed = Column(Boolean, default=False)
 
-    completed_at = Column(DateTime)
+    __table_args__ = (UniqueConstraint('student_id', 'lesson_id', name='unique_student_lesson'),)
 
 
+class Comment(BaseModel):
+    __tablename__ = 'comment'
+    content = Column(String(500), nullable=False)
+    # [BỔ SUNG 2] Thêm created_date để sắp xếp hỏi đáp theo thời gian (YC5)
+    # BaseModel đã có created_date kế thừa từ class cha → không cần khai báo lại
+    lesson_id = Column(Integer, ForeignKey('lesson.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    parent_id = Column(Integer, ForeignKey('comment.id'))
+
+    replies = relationship(
+        "Comment",
+        backref=db.backref('parent', remote_side='Comment.id'),
+        lazy=True,
+        cascade="all, delete-orphan"
+    )
 
 
+# [BỔ SUNG 1] Bảng Rating/Review để hỗ trợ xem đánh giá khóa học (YC1)
+class Rating(BaseModel):
+    __tablename__ = 'rating'
+    # Điểm đánh giá từ 1 đến 5
+    score = Column(Integer, nullable=False)
+    # Nội dung nhận xét (tùy chọn)
+    review = Column(Text, nullable=True)
 
-class Question(db.Model):
+    course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
+    # Chỉ student đã enroll mới được đánh giá → dùng user_id liên kết về User
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
 
-    """Yêu cầu 5: Hỏi đáp - Câu hỏi"""
-
-    __tablename__ = "questions"
-
-    id = Column(Integer, primary_key=True)
-
-    course_id = Column(Integer, ForeignKey("courses.id"))
-
-    user_id = Column(Integer, ForeignKey("users.id"))
-
-    title = Column(String(255), nullable=False)
-
-    content = Column(Text, nullable=False)
-
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-
-    answers = relationship("Answer", backref="question", cascade="all, delete-orphan")
+    # Mỗi học viên chỉ được đánh giá 1 lần cho mỗi khóa học
+    __table_args__ = (UniqueConstraint('course_id', 'user_id', name='unique_course_user_rating'),)
 
 
-
-
-
-class Answer(db.Model):
-
-    """Yêu cầu 5: Hỏi đáp - Câu trả lời"""
-
-    __tablename__ = "answers"
-
-    id = Column(Integer, primary_key=True)
-
-    question_id = Column(Integer, ForeignKey("questions.id"))
-
-    user_id = Column(Integer, ForeignKey("users.id"))
-
-    content = Column(Text, nullable=False)
-
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+class Degree(BaseModel):
+    __tablename__ = 'degree'
+    name = Column(String(50), nullable=False)
+    url = Column(String(200), nullable=False)
+    lecturer_id = Column(Integer, ForeignKey('lecturer.id'), nullable=False)
 
 
