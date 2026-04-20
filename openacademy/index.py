@@ -1,16 +1,22 @@
-from flask import render_template, request, redirect, url_for
-from flask_login import login_user
+from datetime import datetime
 
-from openacademy import app, utils, models, login
+from flask import render_template, request, redirect, url_for
+from flask_login import login_user, logout_user
+from werkzeug.debug import console
+
+from openacademy import app, utils, models, login, VNPAY_TMN_CODE, VNPAY_RETURN_URL, VNPAY_PAYMENT_URL, \
+    VNPAY_HASH_SECRET
 import cloudinary.uploader
 
-from openacademy.models import UserRole
-from openacademy.utils import add_lecturer, add_student
+from openacademy.models import UserRole, Course
+from openacademy.utils import add_lecturer, add_student, vnpay
 
+from openacademy.models import Enrollment, db
+from flask_login import current_user
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('login.html')
 
 
 @app.route('/lecturer-register', methods=['GET', 'POST'])
@@ -138,10 +144,13 @@ def login():
 
     return render_template('login.html', err_msg=err_msg)
 
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
 
 @app.route('/courses', methods=['GET'])
 def load_courses():
-    # Lấy dữ liệu từ tham số URL (?kw=...&category_id=...)
     kw = request.args.get('kw')
     category_id = request.args.get('category_id')
     lecturer_id = request.args.get('lecturer_id')
@@ -150,9 +159,8 @@ def load_courses():
 
     courses = utils.load_courses(kw, category_id, lecturer_id, goal, level)
 
-    # Cần truyền thêm list categories, lecturers, enums để hiển thị trong <select>
     categories = utils.load_categories()
-    lecturers = utils.load_lecturers()  # Tự viết thêm hàm lấy list này nhé
+    lecturers = utils.load_lecturers()
 
     return render_template('courses.html',
                            courses=courses,
@@ -160,6 +168,83 @@ def load_courses():
                            lecturers=lecturers,
                            goals=models.StudyGoal,
                            levels=models.StudentLevel)
+
+
+@app.route('/courses/<int:course_id>')
+def course_detail(course_id):
+    course = Course.query.get_or_404(course_id)
+
+    enrolled_ids = []
+    if current_user.is_authenticated:
+        enrollments = utils.load_enrollments(current_user.id)
+        enrolled_ids = [en.course_id for en in enrollments]
+
+    return render_template('course_detail.html',
+                           course=course,
+                           enrolled_ids=enrolled_ids)
+
+
+@app.route('/payment', methods=['POST'])
+def payment():
+    course_id = request.form.get('course_id')
+    amount_str = request.form.get('amount')
+    amount = int(float(amount_str))
+    order_desc = request.form.get('order_desc')
+    txn_ref = f"{course_id}-{datetime.now().strftime('%H%M%S')}"
+    vnp = vnpay()
+    vnp.request_data['vnp_TxnRef'] = txn_ref
+    vnp.request_data['vnp_Version'] = '2.1.0'
+    vnp.request_data['vnp_Command'] = 'pay'
+    vnp.request_data['vnp_TmnCode'] = VNPAY_TMN_CODE
+    vnp.request_data['vnp_Amount'] = int(amount) * 100
+    vnp.request_data['vnp_CurrCode'] = 'VND'
+    vnp.request_data['vnp_TxnRef'] = txn_ref
+    vnp.request_data['vnp_OrderInfo'] = order_desc
+    vnp.request_data['vnp_OrderType'] = 'billpayment'
+    vnp.request_data['vnp_Locale'] = 'vn'
+    vnp.request_data['vnp_CreateDate'] = datetime.now().strftime('%Y%m%d%H%M%S')
+    vnp.request_data['vnp_IpAddr'] = request.remote_addr
+    vnp.request_data['vnp_ReturnUrl'] = VNPAY_RETURN_URL
+
+    vnpay_payment_url = vnp.get_payment_url(VNPAY_PAYMENT_URL, VNPAY_HASH_SECRET)
+    return redirect(vnpay_payment_url)
+
+
+@app.route('/payment_return', methods=['GET'])
+def payment_return():
+    vnp = vnpay()
+    vnp.response_data = request.args.to_dict()
+
+    if vnp.validate_response(VNPAY_HASH_SECRET):
+        if vnp.response_data['vnp_ResponseCode'] == '00':
+
+            txn_ref = vnp.response_data['vnp_TxnRef']
+
+            course_id = int(txn_ref.split('-')[0])
+
+            vnp_amount = float(vnp.response_data['vnp_Amount']) / 100
+
+            existing_enroll = Enrollment.query.filter_by(
+                student_id=current_user.id,
+                course_id=course_id
+            ).first()
+
+            if not existing_enroll:
+                new_enrollment = Enrollment(
+                    student_id=current_user.id,
+                    course_id=course_id,
+                    total_payment=vnp_amount,
+                    payment_status=True
+                )
+                db.session.add(new_enrollment)
+                db.session.commit()
+                return "Chúc mừng! Bạn đã đăng ký khóa học thành công."
+
+            return "Khóa học này bạn đã đăng ký rồi."
+        else:
+            return f"Thanh toán không thành công. Mã lỗi: {vnp.response_data['vnp_ResponseCode']}"
+    else:
+        return "Lỗi xác thực chữ ký bảo mật."
 
 
 if __name__ == '__main__':

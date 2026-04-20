@@ -70,7 +70,7 @@
                 </div>
                 <div class="card-footer bg-white border-0 p-4 pt-0 d-flex justify-content-between align-items-center">
                     <span class="fw-bold text-primary fs-5">$ {{ "{:,.0f}".format(c.price) }} VNĐ</span>
-                    <a href="#" class="btn btn-primary px-4 rounded-pill">Xem chi tiết</a>
+                    <a href="{{ url_for('course_detail', course_id=c.id) }}" class="btn btn-primary px-4 rounded-pill">Xem chi tiết</a>
                 </div>
             </div>
         </div>

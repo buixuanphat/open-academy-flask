@@ -17,3 +17,8 @@ cloudinary.config(
 )
 
 login = LoginManager(app=app)
+
+VNPAY_TMN_CODE = 'Z5IJKQGT'
+VNPAY_HASH_SECRET = 'DHI759AV08T7N8188OECPJ1XLUCCUE8E'
+VNPAY_PAYMENT_URL = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'
+VNPAY_RETURN_URL = 'https://jettie-unpadlocked-stoutly.ngrok-free.dev/payment_return'

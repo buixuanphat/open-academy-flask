@@ -1,8 +1,7 @@
-from sqlalchemy.sql.operators import bitwise_or_op
-
-from openacademy import db
 from openacademy.models import *
 import hashlib
+import hmac
+import urllib.parse
 
 def add_lecturer(last_name, first_name, email, password, avatar, bio, degrees):
     password= str(hashlib.md5(password.encode('utf-8')).hexdigest())
@@ -73,12 +72,9 @@ def get_user_by_id(user_id):
 
 
 def load_categories():
-    # Sắp xếp theo tên cho người dùng dễ tìm
     return Category.query.order_by(Category.name.asc()).all()
 
 def load_lecturers():
-    # Thường mình sẽ lấy giảng viên đang hoạt động
-    # Bạn có thể join với bảng User để lấy tên (first_name, last_name)
     return Lecturer.query.filter(Lecturer.active == True).all()
 
 
@@ -101,3 +97,50 @@ def load_courses(kw=None, category_id=None, lecturer_id=None, goal=None, level=N
         query = query.filter(Course.level == level)
 
     return query.all()
+
+
+def load_enrollments(student_id):
+    return Enrollment.query.filter_by(student_id=student_id).all()
+
+
+class vnpay:
+    request_data = {}
+    response_data = {}
+
+    def __init__(self):
+        self.request_data = {}
+        self.response_data = {}
+
+    def get_payment_url(self, vnpay_payment_url, secret_key):
+        input_data = sorted(self.request_data.items())
+        query_string = ""
+        has_data = False
+        seq = 0
+        for key, val in input_data:
+            if has_data:
+                query_string += "&"
+            query_string += urllib.parse.quote_plus(key) + "=" + urllib.parse.quote_plus(str(val))
+            has_data = True
+
+        hash_value = hmac.new(secret_key.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha512).hexdigest()
+        return vnpay_payment_url + "?" + query_string + "&vnp_SecureHash=" + hash_value
+
+    def validate_response(self, secret_key):
+        vnp_secure_hash = self.response_data.get('vnp_SecureHash')
+        if 'vnp_SecureHash' in self.response_data:
+            self.response_data.pop('vnp_SecureHash')
+        if 'vnp_SecureHashType' in self.response_data:
+            self.response_data.pop('vnp_SecureHashType')
+
+        input_data = sorted(self.response_data.items())
+        has_data = False
+        query_string = ""
+        for key, val in input_data:
+            if has_data:
+                query_string += "&"
+            query_string += urllib.parse.quote_plus(key) + "=" + urllib.parse.quote_plus(str(val))
+            has_data = True
+
+        hash_value = hmac.new(secret_key.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha512).hexdigest()
+        return vnp_secure_hash == hash_value
+
