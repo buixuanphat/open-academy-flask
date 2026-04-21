@@ -10,7 +10,6 @@ from sqlalchemy import func
 
 lecturer_bp = Blueprint('lecturer', __name__, url_prefix='/lecturer')
 
-
 @lecturer_bp.route('/dashboard')
 @login_required
 def dashboard():
@@ -18,23 +17,36 @@ def dashboard():
         flash("Bạn không có quyền truy cập trang này.", "danger")
         return redirect(url_for('student.index'))
 
-    # Lấy danh sách khóa học của giảng viên này
+    # Lấy tham số tìm kiếm và lọc từ URL
+    kw = request.args.get('kw', '').strip()
+    status_filter = request.args.get('status', '').strip()
     page = request.args.get('page', 1, type=int)
-    courses_query = Course.query.filter_by(lecturer_id=current_user.id).order_by(Course.created_date.desc())
-    pagination = courses_query.paginate(page=page, per_page=5)
 
-    # Thống kê tổng quan
-    total_courses = courses_query.count()
+    # Khởi tạo Query lọc theo chính giảng viên này
+    query = Course.query.filter_by(lecturer_id=current_user.id)
+
+    # Lọc theo từ khóa (Nếu có)
+    if kw:
+        query = query.filter(Course.title.contains(kw))
+
+    # Lọc theo trạng thái (Nếu có)
+    if status_filter:
+        query = query.filter(Course.status == status_filter)
+
+    # Thực hiện phân trang
+    pagination = query.order_by(Course.created_date.desc()).paginate(page=page, per_page=5)
+
+    # Thống kê tổng quan (Dùng query gốc để số liệu không bị ảnh hưởng bởi Filter tìm kiếm)
+    total_courses = Course.query.filter_by(lecturer_id=current_user.id).count()
     active_courses = Course.query.filter_by(lecturer_id=current_user.id, status=CourseStatus.ACTIVE).count()
-
-    # Tổng học viên (tất cả khóa học của giảng viên này)
     total_students = db.session.query(Enrollment).join(Course).filter(Course.lecturer_id == current_user.id).count()
 
     return render_template('lecturer/dashboard.html',
                            pagination=pagination,
                            total_courses=total_courses,
                            active_courses=active_courses,
-                           total_students=total_students)
+                           total_students=total_students,
+                           CourseStatus=CourseStatus) # Truyền class Enum để render thẻ Select
 
 
 @lecturer_bp.route('/course/create', methods=['GET', 'POST'])

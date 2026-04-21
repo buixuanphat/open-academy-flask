@@ -12,65 +12,136 @@
 
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card p-3 shadow-sm border-0 bg-dark text-white">
-                <small>Tổng khóa học</small>
-                <h3 class="fw-bold">{{ total_courses }}</h3>
+            <div class="card p-3 shadow-sm border-0 bg-dark text-white text-center">
+                <small class="opacity-75">Tổng khóa học</small>
+                <h3 class="fw-bold m-0">{{ total_courses }}</h3>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card p-3 shadow-sm border-0">
-                <small>Đang hoạt động</small>
-                <h3 class="fw-bold">{{ active_courses }}</h3>
+            <div class="card p-3 shadow-sm border-0 text-center">
+                <small class="text-muted">Đang hoạt động</small>
+                <h3 class="fw-bold m-0 text-success">{{ active_courses }}</h3>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card p-3 shadow-sm border-0">
-                <small>Tổng học viên</small>
-                <h3 class="fw-bold">{{ total_students | format_number }}</h3>
+            <div class="card p-3 shadow-sm border-0 text-center">
+                <small class="text-muted">Tổng học viên</small>
+                <h3 class="fw-bold m-0">{{ total_students }}</h3>
             </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form id="filter-form" method="GET" action="{{ url_for('lecturer.dashboard') }}" class="row g-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                        <input type="text" name="kw" class="form-control border-start-0 ps-0"
+                               placeholder="Tìm tên khóa học..." value="{{ request.args.get('kw', '') }}">
+                        <button class="btn btn-dark" type="submit">Tìm kiếm</button>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <select name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="">-- Tất cả trạng thái --</option>
+                        {% for s in CourseStatus %}
+                        <option value="{{ s.value }}" {% if request.args.get('status') == s.value %}selected{% endif %}>
+                            {{ s.name | capitalize }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <a href="{{ url_for('lecturer.dashboard') }}" class="btn btn-outline-secondary w-100">Xóa bộ lọc</a>
+                </div>
+            </form>
         </div>
     </div>
 
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="ps-4">KHÓA HỌC</th>
-                        <th>DANH MỤC</th>
-                        <th>HỌC VIÊN</th>
-                        <th>TRẠNG THÁI</th>
-                        <th>THAO TÁC</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for course in pagination.items %}
-                    <tr>
-                        <td class="ps-4">
-                            <div class="d-flex align-items-center">
-                                <img src="{{ course.image }}" class="rounded me-3" width="60" alt="Thumbnail">
-                                <div>
-                                    <div class="fw-bold">{{ course.title }}</div>
-                                    <small class="text-muted">{{ course.sections|length }} chương</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>{{ course.category.name }}</td>
-                        <td>{{ course.enrollments|length }}</td>
-                        <td>
-                            <span class="badge {% if course.status.value == 'active' %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %}">
-                                {{ course.status.value | capitalize }}
-                            </span>
-                        </td>
-                        <td>
-                            <a href="{{ url_for('lecturer.manage_course', course_id=course.id) }}" class="btn btn-sm btn-dark">Chỉnh sửa</a>
-                            <button class="btn btn-sm btn-outline-danger">Xóa</button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-secondary">
+                        <tr>
+                            <th class="ps-4 border-0">KHÓA HỌC</th>
+                            <th class="border-0">DANH MỤC</th>
+                            <th class="border-0">HỌC VIÊN</th>
+                            <th class="border-0">TRẠNG THÁI</th>
+                            <th class="border-0">THAO TÁC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if pagination.items %}
+                            {% for course in pagination.items %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ course.image }}" class="rounded me-3 object-fit-cover"
+                                             width="60" height="40" alt="Thumbnail">
+                                        <div>
+                                            <div class="fw-bold">{{ course.title }}</div>
+                                            <small class="text-muted">{{ course.sections|length }} chương • {{ course.created_date.strftime('%d/%m/%Y') }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-light text-dark">{{ course.category.name }}</span></td>
+                                <td><i class="bi bi-people me-1"></i>{{ course.enrollments|length }}</td>
+                                <td>
+                                    {% if course.status.value == 'active' %}
+                                        <span class="badge bg-success-subtle text-success border border-success">Active</span>
+                                    {% elif course.status.value == 'draft' %}
+                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary">Draft</span>
+                                    {% else %}
+                                        <span class="badge bg-warning-subtle text-warning border border-warning">{{ course.status.value | capitalize }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('lecturer.manage_course', course_id=course.id) }}" class="btn btn-sm btn-outline-dark">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Xác nhận xóa khóa học?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <p class="text-muted mb-0">Không tìm thấy khóa học nào phù hợp.</p>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
         </div>
+
+        {% if pagination.pages > 1 %}
+        <div class="card-footer bg-white border-0 py-3">
+            <nav>
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                    {% for page_num in pagination.iter_pages() %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('lecturer.dashboard', page=page_num, kw=request.args.get('kw', ''), status=request.args.get('status', '')) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
