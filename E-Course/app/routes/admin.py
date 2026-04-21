@@ -130,3 +130,54 @@ def delete_user(user_id):
         flash("Đã xóa người dùng.")
     return redirect(url_for('admin_custom.manage_users'))
 
+
+# ==========================================
+# 4. QUẢN LÝ KHÓA HỌC (COURSES)
+# ==========================================
+@admin_bp.route('/courses')
+@login_required
+def manage_courses():
+    courses = Course.query.all()
+    return render_template('admin/courses.html', courses=courses)
+
+
+@admin_bp.route('/courses/detail/<int:course_id>')
+@login_required
+def course_detail(course_id):
+    course = Course.query.get_or_404(course_id)
+    sections_data = []
+    for section in course.sections:
+        lessons = [{"title": l.title, "order": l.order_index} for l in section.lessons]
+        sections_data.append({
+            "title": section.title,
+            "lessons": lessons
+        })
+
+    return {
+        "title": course.title,
+        "description": course.description,
+        "price": f"{course.price:,.0f} đ",
+        "lecturer": f"{course.lecturer.last_name} {course.lecturer.first_name}",
+        "sections": sections_data
+    }
+
+
+@admin_bp.route('/courses/approve/<int:course_id>')
+@login_required
+def approve_course(course_id):
+    course = Course.query.get_or_404(course_id)
+    course.status = CourseStatus.ACTIVE
+    db.session.commit()
+    flash(f"Đã duyệt khóa học: {course.title}")
+    return redirect(url_for('admin_custom.manage_courses'))
+
+@admin_bp.route('/courses/delete/<int:course_id>')
+@login_required
+def delete_course(course_id):
+    course = Course.query.get_or_404(course_id)
+    # Lưu lại tiêu đề để hiển thị thông báo flash
+    title = course.title
+    db.session.delete(course)
+    db.session.commit()
+    flash(f"Đã xóa khóa học: {title}")
+    return redirect(url_for('admin_custom.manage_courses'))
