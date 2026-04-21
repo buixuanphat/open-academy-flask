@@ -2,8 +2,6 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app.models import Course, Enrollment, Rating,UserRole, Category, db, CourseStatus,Lesson,StudyGoal, StudentLevel,Section
 from datetime import datetime
-import os
-from werkzeug.utils import secure_filename
 import cloudinary
 import cloudinary.uploader
 from sqlalchemy import func
@@ -272,3 +270,25 @@ def course_statistics(course_id):
                            total_students=total_students,
                            total_revenue=total_revenue,
                            avg_rating=avg_rating)
+
+
+@lecturer_bp.route('/course/<int:course_id>/submit', methods=['POST'])
+@login_required
+def submit_course(course_id):
+    course = Course.query.get_or_404(course_id)
+
+    # Kiểm tra quyền sở hữu
+    if course.lecturer_id != current_user.id:
+        flash("Bạn không có quyền thực hiện thao tác này.", "danger")
+        return redirect(url_for('lecturer.dashboard'))
+
+    # Kiểm tra điều kiện (Ví dụ: Khóa học phải có ít nhất 1 bài học mới cho gửi duyệt)
+    if not course.sections or len(course.sections) == 0:
+        flash("Khóa học phải có ít nhất một chương và bài học trước khi gửi duyệt!", "warning")
+        return redirect(url_for('lecturer.manage_course', course_id=course.id))
+
+    course.status = CourseStatus.PENDING
+    db.session.commit()
+
+    flash(f"Khóa học '{course.title}' đã được gửi duyệt thành công!", "success")
+    return redirect(url_for('lecturer.dashboard'))

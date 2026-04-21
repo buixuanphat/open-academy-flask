@@ -100,15 +100,26 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <div class="btn-group">
-                                        <a href="{{ url_for('lecturer.manage_course', course_id=course.id) }}" class="btn btn-sm btn-outline-dark">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Xác nhận xóa khóa học?')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
+    <div class="btn-group">
+        {% if course.status.value == 'draft' %}
+        <form action="{{ url_for('lecturer.submit_course', course_id=course.id) }}" method="POST" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-outline-primary" title="Gửi duyệt khóa học"
+                    onclick="return confirm('Sau khi gửi duyệt, bạn sẽ không thể chỉnh sửa cho đến khi có kết quả. Xác nhận?')">
+                <i class="bi bi-send"></i>
+            </button>
+        </form>
+        {% endif %}
+
+        <a href="{{ url_for('lecturer.manage_course', course_id=course.id) }}"
+           class="btn btn-sm btn-outline-dark" title="Chỉnh sửa nội dung">
+            <i class="bi bi-pencil"></i>
+        </a>
+
+        <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Xác nhận xóa khóa học?')">
+            <i class="bi bi-trash"></i>
+        </button>
+    </div>
+</td>
                             </tr>
                             {% endfor %}
                         {% else %}

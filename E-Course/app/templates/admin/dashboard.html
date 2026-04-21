@@ -1,0 +1,83 @@
+{% extends "layout/admin_base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block header_title %}Tổng quan hệ thống{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <div class="text-muted small fw-bold mb-2">TỔNG DOANH THU</div>
+            <div class="h4 fw-bold mb-0 text-success">{{ "{:,.0f}".format(stats.total_revenue) }} đ</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <div class="text-muted small fw-bold mb-2">HỌC VIÊN</div>
+            <div class="h4 fw-bold mb-0">{{ stats.total_users }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <div class="text-muted small fw-bold mb-2">KHÓA HỌC</div>
+            <div class="h4 fw-bold mb-0">{{ stats.total_courses }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <div class="text-muted small fw-bold mb-2">ĐĂNG KÝ MỚI</div>
+            <div class="h4 fw-bold mb-0 text-warning">{{ stats.total_enrollments }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <h6 class="fw-bold mb-4">Phân tích khóa học theo danh mục</h6>
+            <div style="height: 350px;">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <h6 class="fw-bold mb-4">Giảng viên mới</h6>
+            <div class="list-group list-group-flush">
+                {% for lec in pending_lecturers %}
+                <div class="list-group-item px-0 py-3 d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ lec.avatar or 'https://ui-avatars.com/api/?name=' + lec.first_name }}" class="rounded-circle me-3" width="35">
+                        <div class="fw-bold small">{{ lec.last_name }} {{ lec.first_name }}</div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-dark rounded-pill">Duyệt</button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ labels|tojson }},
+                datasets: [{
+                    data: {{ data|tojson }},
+                    backgroundColor: '#111',
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, grid: { color: '#f5f5f5' } }, x: { grid: { display: false } } }
+            }
+        });
+    });
+</script>
+{% endblock %}

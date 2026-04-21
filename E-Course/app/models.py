@@ -69,6 +69,18 @@ class User(BaseModel, UserMixin):
     def __str__(self):
         return f"{self.last_name} {self.first_name}"
 
+# Thêm lớp này vào app/models.py
+class Admin(User):
+    __tablename__ = 'admin'
+    # Khóa ngoại nối về bảng user
+    id = Column(Integer, ForeignKey('user.id'), primary_key=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': UserRole.ADMIN # Nhận diện role ADMIN
+    }
+
+    def __str__(self):
+        return f"Quản trị viên: {self.last_name}"
 
 class Lecturer(User):
     __tablename__ = 'lecturer'

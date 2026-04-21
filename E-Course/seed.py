@@ -1,7 +1,7 @@
 from app import create_app, db
 from app.models import (
     UserRole, StudyGoal, StudentLevel, Status, CourseStatus,
-    Category, Course, Section, Lesson, Lecturer, Student, User
+    Category, Course, Section, Lesson, Lecturer, Student, User, Admin
 )
 from werkzeug.security import generate_password_hash
 
@@ -27,7 +27,7 @@ def seed_data():
 
         # 3. Tạo tài khoản mẫu
         # Admin
-        admin = User(
+        admin = Admin(
             first_name="Admin",
             last_name="System",
             email="admin@gmail.com",

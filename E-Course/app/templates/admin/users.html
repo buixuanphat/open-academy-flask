@@ -1,0 +1,143 @@
+{% extends "layout/admin_base.html" %}
+
+{% block title %}Quản lý người dùng{% endblock %}
+{% block header_title %}Danh sách người dùng{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">Quản lý người dùng</h4>
+    <a href="{{ url_for('admin_custom.add_user') }}" class="btn btn-dark btn-sm rounded-1 px-3">
+        <i class="bi bi-plus-lg me-1"></i> Thêm người dùng
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" id="searchInput" class="form-control border-start-0 ps-0" placeholder="Tìm kiếm theo tên hoặc email...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select id="roleFilter" class="form-select">
+                    <option value="all">Tất cả vai trò</option>
+                    <option value="student">Học viên</option>
+                    <option value="lecturer">Giảng viên</option>
+                    <option value="admin">Quản trị viên</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle" id="userTable">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4" style="width: 30%;">Họ tên</th>
+                        <th style="width: 30%;">Email</th>
+                        <th style="width: 15%;">Vai trò</th>
+                        <th style="width: 10%;">Trạng thái</th>
+                        <th class="text-end pe-4" style="width: 15%;">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr class="user-row" data-role="{{ user.role.value }}">
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ user.avatar or 'https://ui-avatars.com/api/?name=' + user.first_name }}" class="rounded-circle me-3" width="32" height="32">
+                                <span class="fw-bold user-name">{{ user.last_name }} {{ user.first_name }}</span>
+                            </div>
+                        </td>
+                        <td class="user-email text-muted">{{ user.email }}</td>
+                        <td>
+                            <span class="badge bg-light text-dark border role-badge text-capitalize">{{ user.role.value }}</span>
+                        </td>
+                        <td>
+                            {% if user.active %}
+                            <span class="text-success small fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Active</span>
+                            {% else %}
+                            <span class="text-danger small fw-bold"><i class="bi bi-x-circle-fill me-1"></i>Locked</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                                <a href="{{ url_for('admin_custom.toggle_user_status', user_id=user.id) }}"
+                                   class="btn btn-sm btn-light border" title="{{ 'Khóa' if user.active else 'Mở khóa' }}">
+                                    <i class="bi {{ 'bi-lock' if user.active else 'bi-unlock' }}"></i>
+                                </a>
+                                <a href="{{ url_for('admin_custom.edit_user', user_id=user.id) }}"
+                                   class="btn btn-sm btn-light border" title="Chỉnh sửa">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{{ url_for('admin_custom.delete_user', user_id=user.id) }}"
+                                   class="btn btn-sm btn-light border text-danger"
+                                   onclick="return confirm('Bạn có chắc muốn xóa vĩnh viễn người dùng này?')" title="Xóa">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="noResults" class="p-5 text-center d-none">
+            <i class="bi bi-person-exclamation fs-1 text-muted"></i>
+            <p class="mt-2 text-muted">Không tìm thấy người dùng nào phù hợp với tiêu chí.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const roleFilter = document.getElementById('roleFilter');
+    const tableRows = document.querySelectorAll('.user-row');
+    const noResults = document.getElementById('noResults');
+    const tableElement = document.getElementById('userTable');
+
+    function filterTable() {
+        const searchText = searchInput.value.toLowerCase().trim();
+        const selectedRole = roleFilter.value;
+        let visibleCount = 0;
+
+        tableRows.forEach(row => {
+            const name = row.querySelector('.user-name').textContent.toLowerCase();
+            const email = row.querySelector('.user-email').textContent.toLowerCase();
+            const role = row.getAttribute('data-role');
+
+            const matchesSearch = name.includes(searchText) || email.includes(searchText);
+            const matchesRole = (selectedRole === 'all' || role === selectedRole);
+
+            if (matchesSearch && matchesRole) {
+                row.style.display = ""; // Hiện row
+                visibleCount++;
+            } else {
+                row.style.display = "none"; // Ẩn row
+            }
+        });
+
+        // Hiển thị trạng thái trống
+        if (visibleCount === 0) {
+            noResults.classList.remove('d-none');
+            tableElement.classList.add('d-none');
+        } else {
+            noResults.classList.add('d-none');
+            tableElement.classList.remove('d-none');
+        }
+    }
+
+    searchInput.addEventListener('input', filterTable);
+    roleFilter.addEventListener('change', filterTable);
+});
+</script>
+{% endblock %}
