@@ -1,0 +1,88 @@
+{% extends "layout/lecturer_base.html" %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="mb-4 d-flex align-items-center">
+        <a href="{{ url_for('lecturer.statistics') }}" class="btn btn-light rounded-circle me-3 shadow-sm">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h3 class="fw-bold mb-0">Phân tích: {{ course.title }}</h3>
+    </div>
+
+    <div class="row g-3 mb-5">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+                <span class="text-muted fw-bold small mb-2">HỌC VIÊN</span>
+                <h2 class="fw-bold mb-0">{{ total_students }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+                <span class="text-muted fw-bold small mb-2">DOANH THU</span>
+                <h2 class="fw-bold mb-0 text-success">{{ "{:,.0f}".format(total_revenue) }}đ</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+                <span class="text-muted fw-bold small mb-2">ĐÁNH GIÁ</span>
+                <h2 class="fw-bold mb-0 text-warning">{{ avg_rating }} / 5</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100">
+                <span class="text-muted fw-bold small mb-2">TRẠNG THÁI</span>
+                <h5 class="fw-bold mb-0 text-uppercase text-primary">{{ course.status.value }}</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h6 class="fw-bold mb-4">Tăng trưởng học viên (7 ngày)</h6>
+                <canvas id="studentGrowthChart" height="300"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                <h6 class="fw-bold mb-4">Nguồn đăng ký</h6>
+                <canvas id="sourcePieChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Biểu đồ đường
+    const ctx = document.getElementById('studentGrowthChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+            datasets: [{
+                label: 'Học viên',
+                data: [10, 15, 12, 25, 18, 30, 28],
+                borderColor: '#000',
+                tension: 0.4,
+                fill: true,
+                backgroundColor: 'rgba(0,0,0,0.02)'
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+
+    // Biểu đồ tròn
+    const pieCtx = document.getElementById('sourcePieChart').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Tìm kiếm', 'Affiliate', 'Mạng xã hội'],
+            datasets: [{
+                data: [50, 30, 20],
+                backgroundColor: ['#000', '#666', '#ccc']
+            }]
+        }
+    });
+</script>
+{% endblock %}

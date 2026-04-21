@@ -1,0 +1,45 @@
+{% extends "layout/lecturer_base.html" %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="mb-5">
+        <h2 class="fw-bold">Thống kê hiệu suất</h2>
+        <p class="text-muted">Chọn một khóa học để xem phân tích chi tiết.</p>
+    </div>
+
+    <div class="row g-4">
+        {% for course in courses %}
+        <div class="col-md-6 col-xl-4">
+            <div class="card border-0 shadow-sm h-100 rounded-4 overflow-hidden">
+                <div class="p-4">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="badge bg-dark rounded-pill px-3 py-2" style="font-size: 10px;">{{ course.category.name }}</span>
+                    </div>
+                    <h5 class="fw-bold mb-1 text-truncate">{{ course.title }}</h5>
+                    <p class="text-muted small mb-4">Ngày tạo: {{ course.created_date.strftime('%d/%m/%Y') }}</p>
+
+                    <div class="row g-2 mb-4 text-center">
+                        <div class="col-6">
+                            <div class="bg-light p-3 rounded-3">
+                                <div class="text-muted small mb-1">Học viên</div>
+                                <div class="fw-bold fs-5">{{ course.enrollments|length }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-light p-3 rounded-3">
+                                <div class="text-muted small mb-1">Doanh thu</div>
+                                <div class="fw-bold fs-5">{{ "{:,.0f}".format(course.enrollments|length * course.price) }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="{{ url_for('lecturer.course_statistics', course_id=course.id) }}" class="btn btn-outline-dark w-100 fw-bold border-2">
+                        Xem chi tiết <i class="bi bi-arrow-right ms-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

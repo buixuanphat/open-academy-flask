@@ -1,4 +1,4 @@
-{% extends "layout/base.html" %}
+{% extends "layout/lecturer_base.html" %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -63,7 +63,7 @@
                             </span>
                         </td>
                         <td>
-                            <a href="#" class="btn btn-sm btn-dark">Chỉnh sửa</a>
+                            <a href="{{ url_for('lecturer.manage_course', course_id=course.id) }}" class="btn btn-sm btn-dark">Chỉnh sửa</a>
                             <button class="btn btn-sm btn-outline-danger">Xóa</button>
                         </td>
                     </tr>
