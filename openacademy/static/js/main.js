@@ -73,3 +73,59 @@ function previewPDF(input, id) {
         reader.readAsDataURL(file);
     }
 }
+
+
+// Cập nhật tiến độ
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.querySelector('#video-container');
+
+    if (container) {
+        const studentId = container.dataset.studentId;
+        const lessonId = container.dataset.lessonId;
+        let maxPercent = parseInt(container.dataset.percent) || 0;
+
+        const videoElement = document.querySelector('#lessonVideo');
+
+        if (videoElement) {
+            videoElement.addEventListener('loadedmetadata', () => {
+                if (maxPercent > 0 && maxPercent < 100) {
+                    const seekTime = (maxPercent * videoElement.duration) / 100;
+                    videoElement.currentTime = seekTime;
+                }
+            });
+
+            videoElement.addEventListener('timeupdate', () => {
+                if (!videoElement.duration) return;
+                const percent = Math.round((videoElement.currentTime / videoElement.duration) * 100);
+
+                if (percent > maxPercent) {
+                    maxPercent = percent;
+                    saveProgress(maxPercent, studentId, lessonId);
+                }
+            });
+        }
+    }
+});
+
+function saveProgress(percent, student_id, lesson_id) {
+    fetch('/update-progress', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            student_id: student_id,
+            lesson_id: lesson_id,
+            percent: percent
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            console.log(`Server: Đã cập nhật thành công ${percent}%`);
+        }
+    })
+    .catch((error) => {
+        console.error('Lỗi khi gửi fetch:', error);
+    });
+}

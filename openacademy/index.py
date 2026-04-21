@@ -2,13 +2,12 @@ from datetime import datetime
 
 from flask import render_template, request, redirect, url_for
 from flask_login import login_user, logout_user
-from werkzeug.debug import console
 
 from openacademy import app, utils, models, login, VNPAY_TMN_CODE, VNPAY_RETURN_URL, VNPAY_PAYMENT_URL, \
     VNPAY_HASH_SECRET
 import cloudinary.uploader
 
-from openacademy.models import UserRole, Course
+from openacademy.models import UserRole, Course, Lesson
 from openacademy.utils import add_lecturer, add_student, vnpay
 
 from openacademy.models import Enrollment, db
@@ -172,8 +171,7 @@ def load_courses():
 
 @app.route('/courses/<int:course_id>')
 def course_detail(course_id):
-    course = Course.query.get_or_404(course_id)
-
+    course = utils.load_course_details(course_id)
     enrolled_ids = []
     if current_user.is_authenticated:
         enrollments = utils.load_enrollments(current_user.id)
@@ -245,6 +243,28 @@ def payment_return():
             return f"Thanh toán không thành công. Mã lỗi: {vnp.response_data['vnp_ResponseCode']}"
     else:
         return "Lỗi xác thực chữ ký bảo mật."
+
+
+@app.route('/learning/<int:course_id>/<int:lesson_id>')
+def learning(course_id, lesson_id):
+    course = utils.load_course_details(course_id)
+    current_lesson = Lesson.query.get_or_404(lesson_id)
+
+    percent = utils.load_progress(current_user.id, current_lesson.id)
+
+    return render_template('learning.html', course=course, current_lesson=current_lesson, percent=percent)
+
+
+@app.route('/update-progress', methods=['POST'])
+def update_progress():
+    data = request.get_json()
+    lesson_id = data.get('lesson_id')
+    student_id = data.get('student_id')
+    percent = data.get('percent')
+
+    utils.update_progress(student_id, lesson_id, percent)
+
+    return {"status": "success"}, 200
 
 
 if __name__ == '__main__':

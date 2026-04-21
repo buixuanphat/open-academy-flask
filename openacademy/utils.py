@@ -2,6 +2,10 @@ from openacademy.models import *
 import hashlib
 import hmac
 import urllib.parse
+from sqlalchemy.orm import joinedload
+
+from openacademy.models import Progress
+
 
 def add_lecturer(last_name, first_name, email, password, avatar, bio, degrees):
     password= str(hashlib.md5(password.encode('utf-8')).hexdigest())
@@ -102,6 +106,34 @@ def load_courses(kw=None, category_id=None, lecturer_id=None, goal=None, level=N
 def load_enrollments(student_id):
     return Enrollment.query.filter_by(student_id=student_id).all()
 
+
+def load_course_details(course_id):
+    return Course.query.options(
+        joinedload(Course.sections).joinedload(Section.lessons)
+    ).get_or_404(course_id)
+
+
+def load_progress(student_id, lesson_id):
+    progress = Progress.query.filter_by(student_id=student_id, lesson_id=lesson_id).first()
+
+    if progress:
+        return progress.percent
+    return 0
+
+
+def update_progress(student_id, lesson_id, percent):
+    progress = Progress.query.filter_by(student_id=student_id, lesson_id=lesson_id).first()
+
+    if progress:
+        # Nếu đã có thì chỉ cập nhật nếu phần trăm mới cao hơn
+        if percent > progress.percent:
+            progress.percent = percent
+    else:
+        # Nếu chưa có thì phải tạo mới (INSERT)
+        new_progress = Progress(student_id=student_id, lesson_id=lesson_id, percent=percent)
+        db.session.add(new_progress)
+
+    db.session.commit()
 
 class vnpay:
     request_data = {}

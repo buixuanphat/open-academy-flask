@@ -497,3 +497,26 @@ body {
     background-color: #f9f9f9;
     transform: translateY(-5px);
 }
+
+
+/*LEARNING*/
+.tiny { font-size: 0.75rem; }
+
+.active-lesson {
+    background-color: #f0f7ff !important;
+    border-left: 4px solid #0d6efd !important;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+.scroll-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+.scroll-sidebar::-webkit-scrollbar-thumb {
+    background: #e0e0e0;
+    border-radius: 10px;
+}
+
+.rounded-4 { border-radius: 1rem !important; }

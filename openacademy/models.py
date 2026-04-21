@@ -1,6 +1,7 @@
 from openacademy import db
 from datetime import datetime
-from sqlalchemy import (Column, Integer, String, Float, Boolean, DateTime, ForeignKey, UniqueConstraint, Enum, Text)
+from sqlalchemy import (Column, Integer, String, Float, Boolean, DateTime, ForeignKey, UniqueConstraint, Enum, Text,
+                        Double)
 from sqlalchemy.orm import relationship
 from enum import Enum as PyEnum
 from flask_login import UserMixin
@@ -12,28 +13,28 @@ class BaseModel(db.Model):
 
 # ENUM
 class UserRole(PyEnum):
-    USER = "user"
-    ADMIN = "admin"
-    LECTURER = "lecturer"
-    STUDENT = "student"
+    USER = "Người dùng"
+    ADMIN = "Quản trị viên"
+    LECTURER = "Giảng viên"
+    STUDENT = "Học viên"
 
 class StudyGoal(PyEnum):
-    UPSKILL = "upskill"
-    CAREER_CHANGE = "career_change"
-    CERTIFICATION = "certification"
-    RESEARCH = "research"
-    HOBBY = "hobby"
+    UPSKILL = "Nâng cao kỹ năng"
+    CAREER_CHANGE = "Chuyển đổi nghề nghiệp"
+    CERTIFICATION = "Lấy chứng chỉ"
+    RESEARCH = "Nghiên cứu"
+    HOBBY = "Sở thích"
 
 class StudentLevel(PyEnum):
-    BEGINNER = "beginner"
-    INTERMEDIATE = "intermediate"
-    ADVANCED = "advanced"
-    EXPERT = "expert"
+    BEGINNER = "Người mới bắt đầu"
+    INTERMEDIATE = "Trung cấp"
+    ADVANCED = "Nâng cao"
+    EXPERT = "Chuyên gia"
 
 class Status(PyEnum):
-    PENDING = "pending"
-    VERIFIED = "verified"
-    REJECTED = "rejected"
+    PENDING = "Đang chờ"
+    VERIFIED = "Đã xác thực"
+    REJECTED = "Đã từ chối"
 
 
 class User(BaseModel, UserMixin):
@@ -140,6 +141,7 @@ class Progress(BaseModel):
     student_id = Column(Integer, ForeignKey('student.id'), nullable=False)
     lesson_id = Column(Integer, ForeignKey('lesson.id'), nullable=False)
     is_completed = Column(Boolean, default=False)
+    percent = Column(Double, nullable=False)
 
     __table_args__ = (UniqueConstraint('student_id', 'lesson_id', name='unique_student_lesson'),)
 

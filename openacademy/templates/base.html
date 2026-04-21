@@ -21,7 +21,7 @@
         <span class="divider">|</span>
         <!--        <a href="#">Khóa học</a>-->
         <!--        <span class="divider">|</span>-->
-        {% if current_user.is_authenticated and current_user.role.value == "student" %}
+        {% if current_user.is_authenticated and current_user.role.value == "Học viên" %}
         <a href="#">Khóa học</a>
         <span class="divider">|</span>
         {% endif %}

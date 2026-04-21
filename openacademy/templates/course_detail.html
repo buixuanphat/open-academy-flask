@@ -59,13 +59,21 @@
 
             <h4 class="fw-bold mb-4">Nội dung chính</h4>
             <div class="list-group border-0">
+                {% for s in course.sections %}
                 <div class="list-group-item border-0 bg-light rounded-4 mb-3 p-3 d-flex align-items-center">
-                    <span class="badge bg-primary rounded-circle me-3 p-2">1</span>
+                    <span class="badge bg-primary rounded-circle me-3 p-2"
+                          style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                            {{ loop.index }}
+                    </span>
+
                     <div>
-                        <div class="fw-bold">Kiến thức nền tảng</div>
-                        <div class="text-muted small">Nắm vững các khái niệm cơ bản và nguyên lý hoạt động</div>
+                        <div class="fw-bold">{{ s.title }}</div>
+                        <div class="text-muted small">
+                            {{ s.lessons|length }} bài học
+                        </div>
                     </div>
                 </div>
+                {% endfor %}
             </div>
 
 
@@ -75,9 +83,11 @@
                 <input type="hidden" name="order_desc" value="Thanh toan khoa hoc: {{ course.title }}">
 
                 {% if course.id in enrolled_ids or course.price == 0 %}
-                <a
-                   class="btn btn-success btn-lg px-5 py-3 rounded-3 flex-grow-1 fw-bold">
-                    <i class="fa-solid fa-play me-2"></i> Học
+                {% set first_lesson = course.sections[0].lessons[0] %}
+
+                <a href="{{ url_for('learning', course_id=course.id, lesson_id=first_lesson.id) }}"
+                   class="btn btn-success btn-lg px-5 py-3 rounded-3 flex-grow-1 fw-bold text-decoration-none">
+                    <i class="fa-solid fa-play me-2"></i> Học ngay
                 </a>
                 {% else %}
                 <form action="{{ url_for('payment') }}" method="POST" class="flex-grow-1">
