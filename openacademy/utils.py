@@ -125,15 +125,38 @@ def update_progress(student_id, lesson_id, percent):
     progress = Progress.query.filter_by(student_id=student_id, lesson_id=lesson_id).first()
 
     if progress:
-        # Nếu đã có thì chỉ cập nhật nếu phần trăm mới cao hơn
         if percent > progress.percent:
             progress.percent = percent
     else:
-        # Nếu chưa có thì phải tạo mới (INSERT)
         new_progress = Progress(student_id=student_id, lesson_id=lesson_id, percent=percent)
         db.session.add(new_progress)
 
     db.session.commit()
+
+
+def calculate_course_progress(student_id, course_id):
+    course = Course.query.get(course_id)
+    if not course or not course.sections:
+        return 0, 0, 0
+
+    total_lessons = 0
+    completed_count = 0
+
+    for section in course.sections:
+        for lesson in section.lessons:
+            total_lessons += 1
+
+            percent = load_progress(student_id, lesson.id)
+            if percent >= 90:
+                completed_count += 1
+
+    if total_lessons == 0:
+        return 0, 0, 0
+
+    progress_percentage = (completed_count / total_lessons) * 100
+
+    return total_lessons, completed_count, round(progress_percentage, 2)
+
 
 class vnpay:
     request_data = {}
@@ -176,3 +199,41 @@ class vnpay:
         hash_value = hmac.new(secret_key.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha512).hexdigest()
         return vnp_secure_hash == hash_value
 
+
+def create_enrollment(student_id, course_id, total_payment):
+    existing_enroll = Enrollment.query.filter_by(
+        student_id=student_id,
+        course_id=course_id
+    ).first()
+
+    if not existing_enroll:
+        new_enrollment = Enrollment(
+            student_id=student_id,
+            course_id=course_id,
+            total_payment=total_payment,
+            payment_status=True
+        )
+        db.session.add(new_enrollment)
+        db.session.commit()
+        return "Chúc mừng! Bạn đã đăng ký khóa học thành công."
+
+    return "Khóa học này bạn đã đăng ký rồi."
+
+
+def load_my_courses(student_id, kw=None):
+    query = db.session.query(Course).join(Enrollment, Enrollment.course_id == Course.id) \
+        .filter(Enrollment.student_id == student_id)
+
+    if kw:
+        query = query.filter(Course.title.contains(kw))
+
+    courses = query.all()
+
+    for c in courses:
+        total, completed, overall_percent = calculate_course_progress(student_id, c.id)
+
+        c.total_lessons = total
+        c.completed_lessons = completed
+        c.progress_percent = overall_percent
+
+    return courses

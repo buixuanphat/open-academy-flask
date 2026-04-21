@@ -17,14 +17,22 @@
         <div class="logo">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
         </div>
+
+        {% if current_user.is_authenticated and current_user.role.value == "Học viên" %}
+        <a href="{{ url_for('load_courses') }}">Trang chủ</a>
+        <span class="divider">|</span>
+        {% endif %}
+
+        {% if current_user.is_authenticated and current_user.role.value == "Học viên" %}
+        <a href="{{ url_for('load_my_courses') }}">Khóa học của tôi</a>
+        <span class="divider">|</span>
+        {% endif %}
+
         <a href="#">Giới thiệu</a>
         <span class="divider">|</span>
         <!--        <a href="#">Khóa học</a>-->
         <!--        <span class="divider">|</span>-->
-        {% if current_user.is_authenticated and current_user.role.value == "Học viên" %}
-        <a href="#">Khóa học</a>
-        <span class="divider">|</span>
-        {% endif %}
+
         <a href="#">Hỗ trợ</a>
     </div>
 

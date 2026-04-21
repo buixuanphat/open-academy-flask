@@ -85,10 +85,35 @@
                 {% if course.id in enrolled_ids or course.price == 0 %}
                 {% set first_lesson = course.sections[0].lessons[0] %}
 
-                <a href="{{ url_for('learning', course_id=course.id, lesson_id=first_lesson.id) }}"
-                   class="btn btn-success btn-lg px-5 py-3 rounded-3 flex-grow-1 fw-bold text-decoration-none">
-                    <i class="fa-solid fa-play me-2"></i> Học ngay
-                </a>
+                <div class="mt-5 d-flex gap-3">
+                    {% if course.id in enrolled_ids %}
+                    {# TRƯỜNG HỢP 1: ĐÃ ĐĂNG KÝ RỒI #}
+                    {% set first_lesson = course.sections[0].lessons[0] %}
+                    <a href="{{ url_for('learning', course_id=course.id, lesson_id=first_lesson.id) }}"
+                       class="btn btn-success btn-lg px-5 py-3 rounded-3 flex-grow-1 fw-bold text-decoration-none">
+                        <i class="fa-solid fa-play me-2"></i> Tiếp tục học
+                    </a>
+
+                    {% elif course.price == 0 %}
+                    {# TRƯỜNG HỢP 2: CHƯA ĐĂNG KÝ VÀ LÀ KHÓA 0Đ #}
+                    <a href="{{ url_for('enroll_free', course_id=course.id) }}"
+                       class="btn btn-success btn-lg px-5 py-3 rounded-3 flex-grow-1 fw-bold text-decoration-none">
+                        <i class="fa-solid fa-bolt me-2"></i> Đăng ký & Học ngay (Miễn phí)
+                    </a>
+
+                    {% else %}
+                    {# TRƯỜNG HỢP 3: CHƯA ĐĂNG KÝ VÀ CÓ PHÍ (THANH TOÁN) #}
+                    <form action="{{ url_for('payment') }}" method="POST" class="flex-grow-1">
+                        <input type="hidden" name="course_id" value="{{ course.id }}">
+                        <input type="hidden" name="amount" value="{{ course.price }}">
+                        <input type="hidden" name="order_desc" value="Thanh toan: {{ course.title }}">
+                        <button type="submit" class="btn btn-primary btn-lg px-5 py-3 rounded-3 w-100 fw-bold">
+                            <i class="fa-solid fa-cart-shopping me-2"></i> Đăng ký ngay - {{
+                            "{:,.0f}".format(course.price) }}đ
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
                 {% else %}
                 <form action="{{ url_for('payment') }}" method="POST" class="flex-grow-1">
                     <input type="hidden" name="course_id" value="{{ course.id }}">

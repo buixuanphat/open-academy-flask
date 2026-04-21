@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from flask import render_template, request, redirect, url_for
-from flask_login import login_user, logout_user
+from flask_login import login_user, logout_user, login_required
 
 from openacademy import app, utils, models, login, VNPAY_TMN_CODE, VNPAY_RETURN_URL, VNPAY_PAYMENT_URL, \
     VNPAY_HASH_SECRET
@@ -169,6 +169,14 @@ def load_courses():
                            levels=models.StudentLevel)
 
 
+@app.route('/my-courses', methods=['GET'])
+def load_my_courses():
+    kw = request.args.get('kw')
+
+    courses = utils.load_my_courses(current_user.id, kw)
+
+    return render_template('my_courses.html', courses=courses)
+
 @app.route('/courses/<int:course_id>')
 def course_detail(course_id):
     course = utils.load_course_details(course_id)
@@ -252,7 +260,9 @@ def learning(course_id, lesson_id):
 
     percent = utils.load_progress(current_user.id, current_lesson.id)
 
-    return render_template('learning.html', course=course, current_lesson=current_lesson, percent=percent)
+    progress = utils.calculate_course_progress(current_user.id, course_id)
+
+    return render_template('learning.html', course=course, current_lesson=current_lesson, percent=percent, progress=progress)
 
 
 @app.route('/update-progress', methods=['POST'])
@@ -265,6 +275,22 @@ def update_progress():
     utils.update_progress(student_id, lesson_id, percent)
 
     return {"status": "success"}, 200
+
+
+@app.route('/enroll-free/<int:course_id>')
+@login_required
+def enroll_free(course_id):
+    course = Course.query.get_or_404(course_id)
+
+    if course.price == 0:
+        msg = utils.create_enrollment(current_user.id, course_id, 0)
+
+        if course.sections and course.sections[0].lessons:
+            first_lesson_id = course.sections[0].lessons[0].id
+            return redirect(url_for('learning', course_id=course.id, lesson_id=first_lesson_id))
+
+    return redirect(url_for('course_detail', course_id=course_id))
+
 
 
 if __name__ == '__main__':

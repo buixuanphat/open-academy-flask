@@ -6,16 +6,17 @@
     <div class="d-flex justify-content-between align-items-center mb-4 px-3">
         <div>
             <h4 class="fw-bold mb-0 text-primary">{{ course.title }}</h4>
-            <p class="text-muted small mb-0">Giảng viên: {{ course.lecturer.name }}</p>
+            <p class="text-muted small mb-0">Giảng viên: {{ course.lecturer.last_name }} {{ course.lecturer.first_name }}</p>
         </div>
-        <div style="width: 250px;">
+        <div style="width: 400px;">
             <div class="d-flex justify-content-between mb-1">
-                <span class="small fw-medium">Tiến độ học tập</span>
-                <span class="small fw-bold text-success">3/8 bài học</span>
+                <span class="small fw-medium">Tiến độ khóa học</span>
+                <span class="small fw-bold text-success">{{ progress[2] }}%, đã hoàn thành {{ progress[1] }}/{{ progress[0] }}</span>
             </div>
             <div class="progress" style="height: 10px; border-radius: 20px;">
                 <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
-                     style="width: 37%"></div>
+                     style="width: {{progress[2]}}%">
+                </div>
             </div>
         </div>
     </div>
@@ -37,25 +38,15 @@
 
                 <div class="card-body p-4">
                     <h3 class="fw-bold text-dark">{{ current_lesson.title }}</h3>
-                    <div class="d-flex align-items-center text-muted small mb-4">
-                        <span class="me-3"><i class="fa-regular fa-clock me-1"></i> {{ current_lesson.duration }}</span>
-                        <span class="badge bg-success-soft text-success px-3 py-2 rounded-pill">
-                            <i class="fa-solid fa-circle-check me-1"></i> Đã hoàn thành
-                        </span>
-                    </div>
 
                     <div class="lesson-description mt-4">
-                        <h5 class="fw-bold mb-3"><i class="fa-regular fa-file-lines me-2 text-primary"></i> Nội dung bài
-                            học</h5>
+                        <h4 class="fw-bold mb-3"><i class="fa-regular fa-file-lines me-2 text-primary"></i> Nội dung bài học</h4>
                         <div class="text-secondary leading-relaxed">
                             {{ current_lesson.content | safe }}
                         </div>
                     </div>
 
                     <div class="d-flex gap-3 mt-5">
-                        <button class="btn btn-primary btn-lg px-5 py-2 rounded-3 flex-grow-1 fw-bold">
-                            <i class="fa-solid fa-download me-2"></i> Tải tài liệu
-                        </button>
                         <button class="btn btn-outline-secondary btn-lg px-5 py-2 rounded-3 flex-grow-1">
                             <i class="fa-regular fa-comments me-2"></i> Đặt câu hỏi
                         </button>
