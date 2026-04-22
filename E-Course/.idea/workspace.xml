@@ -7,7 +7,7 @@
     <list default="true" id="c2b29128-15e7-4ec5-a128-c7b2d528818d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/routes/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/templates/admin/courses.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/admin/courses.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/templates/admin/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/templates/admin/dashboard.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -70,7 +70,7 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "SCRUM-48",
+    "git-widget-placeholder": "SCRUM-47",
     "junie.onboarding.icon.badge.shown": "true",
     "last_opened_file_path": "D:/QLPM_Project/E-Course",
     "node.js.detected.package.eslint": "true",
@@ -212,6 +212,7 @@
       <workItem from="1776760598043" duration="699000" />
       <workItem from="1776761620350" duration="3007000" />
       <workItem from="1776764778474" duration="555000" />
+      <workItem from="1776850988852" duration="1165000" />
     </task>
     <servers />
   </component>
@@ -220,7 +221,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/E_Course$Flask__seed_py_.coverage" NAME="Flask (seed.py) Coverage Results" MODIFIED="1776427753406" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
-    <SUITE FILE_PATH="coverage/E_Course$Flask__run_py_.coverage" NAME="Flask (run.py) Coverage Results" MODIFIED="1776764975363" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/E_Course$Flask__run_py_.coverage" NAME="Flask (run.py) Coverage Results" MODIFIED="1776851740861" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/E_Course$seed.coverage" NAME="seed Coverage Results" MODIFIED="1776360934780" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/E_Course$run.coverage" NAME="run Coverage Results" MODIFIED="1776363853887" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>

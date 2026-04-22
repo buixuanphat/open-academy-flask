@@ -4,6 +4,7 @@ from app import db
 from flask_login import login_required, current_user
 from sqlalchemy import func
 from werkzeug.security import generate_password_hash
+from sqlalchemy import extract
 
 admin_bp = Blueprint('admin_custom', __name__, url_prefix='/admin')
 
@@ -25,6 +26,7 @@ def restrict_admin_access():
 @admin_bp.route('/dashboard')
 @login_required
 def dashboard():
+    # 1. Thống kê tổng quan (Stats Cards)
     stats = {
         'total_users': User.query.count(),
         'total_courses': Course.query.count(),
@@ -32,17 +34,43 @@ def dashboard():
         'total_revenue': db.session.query(func.sum(Enrollment.total_payment)).scalar() or 0
     }
 
+    # 2. Dữ liệu biểu đồ: Doanh thu theo tháng (Năm hiện tại)
+    current_year = 2026
+    monthly_revenue_raw = db.session.query(
+        extract('month', Enrollment.created_date).label('month'),
+        func.sum(Enrollment.total_payment).label('revenue')
+    ).filter(extract('year', Enrollment.created_date) == current_year)\
+     .group_by('month').order_by('month').all()
+
+    # Chuẩn bị dữ liệu cho Chart.js (đảm bảo đủ 12 tháng)
+    revenue_data = [0] * 12
+    for month, rev in monthly_revenue_raw:
+        revenue_data[int(month)-1] = float(rev)
+
+    # 3. Dữ liệu biểu đồ: Khóa học theo danh mục
     course_by_cate = db.session.query(Category.name, func.count(Course.id)) \
         .join(Course).group_by(Category.name).all()
+    cate_labels = [item[0] for item in course_by_cate]
+    cate_data = [item[1] for item in course_by_cate]
 
-    labels = [item[0] for item in course_by_cate]
-    data = [item[1] for item in course_by_cate]
+    # 4. Top 5 khóa học được mua nhiều nhất
+    top_courses = db.session.query(
+        Course.title,
+        func.count(Enrollment.id).label('enroll_count')
+    ).join(Enrollment).group_by(Course.id)\
+     .order_by(func.count(Enrollment.id).desc()).limit(5).all()
 
-    pending_lecturers = User.query.filter(User.role == UserRole.LECTURER).limit(5).all()
+    # 5. Giảng viên mới chờ duyệt (Status Pending)
+    from app.models import Status, Lecturer
+    pending_lecturers = Lecturer.query.filter_by(status=Status.PENDING).limit(5).all()
 
-    return render_template('admin/dashboard.html', stats=stats, labels=labels, data=data,
+    return render_template('admin/dashboard.html',
+                           stats=stats,
+                           revenue_data=revenue_data,  # Dữ liệu doanh thu 12 tháng
+                           labels=cate_labels,  # <--- QUAN TRỌNG: Đặt tên là labels
+                           data=cate_data,  # <--- QUAN TRỌNG: Đặt tên là data
+                           top_courses=top_courses,
                            pending_lecturers=pending_lecturers)
-
 
 # ==========================================
 # 3. QUẢN LÝ NGƯỜI DÙNG (USERS)

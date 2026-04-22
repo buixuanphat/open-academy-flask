@@ -1,58 +1,140 @@
 {% extends "layout/admin_base.html" %}
 
-{% block title %}Dashboard{% endblock %}
-{% block header_title %}Tổng quan hệ thống{% endblock %}
+{% block title %}Dashboard Quản trị{% endblock %}
+{% block header_title %}Hệ thống E-Course Dashboard{% endblock %}
 
 {% block content %}
 <div class="row g-4 mb-4">
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm p-4 h-100">
-            <div class="text-muted small fw-bold mb-2">TỔNG DOANH THU</div>
-            <div class="h4 fw-bold mb-0 text-success">{{ "{:,.0f}".format(stats.total_revenue) }} đ</div>
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex align-items-center">
+                <div class="bg-primary bg-opacity-10 p-3 rounded-4 me-3">
+                    <i class="bi bi-wallet2 text-primary fs-3"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1 small fw-bold">DOANH THU</h6>
+                    <h4 class="mb-0 fw-bold text-dark">{{ "{:,.0f}".format(stats.total_revenue) }}đ</h4>
+                </div>
+            </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm p-4 h-100">
-            <div class="text-muted small fw-bold mb-2">HỌC VIÊN</div>
-            <div class="h4 fw-bold mb-0">{{ stats.total_users }}</div>
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex align-items-center">
+                <div class="bg-success bg-opacity-10 p-3 rounded-4 me-3">
+                    <i class="bi bi-people text-success fs-3"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1 small fw-bold">HỌC VIÊN</h6>
+                    <h4 class="mb-0 fw-bold text-dark">{{ stats.total_users }}</h4>
+                </div>
+            </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm p-4 h-100">
-            <div class="text-muted small fw-bold mb-2">KHÓA HỌC</div>
-            <div class="h4 fw-bold mb-0">{{ stats.total_courses }}</div>
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex align-items-center">
+                <div class="bg-info bg-opacity-10 p-3 rounded-4 me-3">
+                    <i class="bi bi-play-circle text-info fs-3"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1 small fw-bold">KHÓA HỌC</h6>
+                    <h4 class="mb-0 fw-bold text-dark">{{ stats.total_courses }}</h4>
+                </div>
+            </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-0 shadow-sm p-4 h-100">
-            <div class="text-muted small fw-bold mb-2">ĐĂNG KÝ MỚI</div>
-            <div class="h4 fw-bold mb-0 text-warning">{{ stats.total_enrollments }}</div>
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <div class="d-flex align-items-center">
+                <div class="bg-warning bg-opacity-10 p-3 rounded-4 me-3">
+                    <i class="bi bi-cart-check text-warning fs-3"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1 small fw-bold">GHI DANH</h6>
+                    <h4 class="mb-0 fw-bold text-dark">{{ stats.total_enrollments }}</h4>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4">
+<div class="row mb-4">
     <div class="col-lg-8">
-        <div class="card border-0 shadow-sm p-4 h-100">
-            <h6 class="fw-bold mb-4">Phân tích khóa học theo danh mục</h6>
-            <div style="height: 350px;">
-                <canvas id="categoryChart"></canvas>
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white py-3 border-0">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-graph-up me-2"></i>Doanh thu 12 tháng (2026)</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" style="max-height: 300px;"></canvas>
             </div>
         </div>
     </div>
     <div class="col-lg-4">
-        <div class="card border-0 shadow-sm p-4 h-100">
-            <h6 class="fw-bold mb-4">Giảng viên mới</h6>
-            <div class="list-group list-group-flush">
-                {% for lec in pending_lecturers %}
-                <div class="list-group-item px-0 py-3 d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center">
-                        <img src="{{ lec.avatar or 'https://ui-avatars.com/api/?name=' + lec.first_name }}" class="rounded-circle me-3" width="35">
-                        <div class="fw-bold small">{{ lec.last_name }} {{ lec.first_name }}</div>
-                    </div>
-                    <button class="btn btn-sm btn-outline-dark rounded-pill">Duyệt</button>
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white py-3 border-0">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-pie-chart me-2"></i>Tỷ lệ Danh mục</h6>
+            </div>
+            <div class="card-body d-flex align-items-center">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-7 mb-4">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between">
+                <h6 class="mb-0 fw-bold">Khóa học phổ biến nhất</h6>
+                <span class="badge bg-primary-subtle text-primary">Theo số học viên</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3 border-0">Tên khóa học</th>
+                                <th class="text-center border-0">Học viên</th>
+                                <th class="text-end pe-3 border-0">Doanh thu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in top_courses %}
+                            <tr>
+                                <td class="ps-3 fw-medium">{{ course.title }}</td>
+                                <td class="text-center">{{ course.enroll_count }}</td>
+                                <td class="text-end pe-3 fw-bold text-success">{{ "{:,.0f}".format(course.revenue) }}đ</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5 mb-4">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h6 class="mb-0 fw-bold">Giảng viên mới tham gia</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for lecturer in pending_lecturers %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center border-0 py-3">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ lecturer.avatar or 'https://ui-avatars.com/api/?name=' ~ lecturer.first_name }}"
+                                 class="rounded-circle me-3" width="35" height="35">
+                            <div>
+                                <div class="fw-bold small">{{ lecturer.last_name }} {{ lecturer.first_name }}</div>
+                                <div class="text-muted small" style="font-size: 11px;">{{ lecturer.email }}</div>
+                            </div>
+                        </div>
+                        <span class="badge rounded-pill bg-light text-dark border">Chờ duyệt</span>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>
@@ -60,24 +142,38 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const ctx = document.getElementById('categoryChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: {{ labels|tojson }},
-                datasets: [{
-                    data: {{ data|tojson }},
-                    backgroundColor: '#111',
-                    borderRadius: 5
-                }]
-            },
-            options: {
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, grid: { color: '#f5f5f5' } }, x: { grid: { display: false } } }
-            }
-        });
+    // 1. Biểu đồ Doanh thu (Line Chart)
+    const revCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revCtx, {
+        type: 'line',
+        data: {
+            labels: ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'],
+            datasets: [{
+                label: 'Doanh thu',
+                data: {{ revenue_data|tojson }}, // Cần thêm biến này từ backend
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        }
+    });
+
+    // 2. Biểu đồ Danh mục (Doughnut Chart)
+    const cateCtx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(cateCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ labels|tojson }},
+            datasets: [{
+                data: {{ data|tojson }},
+                backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6610f2']
+            }]
+        },
+        options: {
+            cutout: '70%',
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } }
+        }
     });
 </script>
 {% endblock %}
