@@ -1,0 +1,76 @@
+{% extends "layout/lecturer_base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white py-3 border-bottom-0 pt-4 px-4">
+                    <h4 class="mb-0 fw-bold">Thiết lập khóa học mới</h4>
+                    <p class="text-muted small">Bước đầu tiên để chia sẻ kiến thức của bạn với cộng đồng.</p>
+                </div>
+                <div class="card-body p-4">
+                    <form action="{{ url_for('create_course') }}" method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Tên khóa học</label>
+                            <input type="text" name="title" class="form-control" placeholder="VD: Lập trình Python cơ bản" required>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Danh mục</label>
+                                <select name="category_id" class="form-select" required>
+                                    {% for c in categories %}
+                                    <option value="{{ c.id }}">{{ c.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Giá khóa học (VNĐ)</label>
+                                <input type="number" name="price" class="form-control" value="0" min="0" placeholder="0">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Mục tiêu</label>
+                                <select name="goal" class="form-select">
+                                    {% for g in goals %}
+                                    <option value="{{ g.value }}">{{ g.value }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Trình độ phù hợp</label>
+                                <select name="level" class="form-select">
+                                    {% for l in levels %}
+                                    <option value="{{ l.value }}">{{ l.value }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Mô tả khóa học</label>
+                            <textarea name="description" class="form-control" rows="5" placeholder="Viết tóm tắt về nội dung học tập..."></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Ảnh bìa khóa học</label>
+                            <input type="file" name="image" class="form-control" accept="image/*">
+                            <div class="form-text">Định dạng hỗ trợ: JPG, PNG. Dung lượng tối đa 2MB.</div>
+                        </div>
+
+                        <hr class="my-4 opacity-25">
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('lecturer_dashboard') }}" class="btn btn-light px-4 me-md-2 border">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-dark px-5">Lưu và tiếp tục</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

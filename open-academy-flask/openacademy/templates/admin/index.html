@@ -1,0 +1,53 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container-fluid pt-4">
+    <h3 class="fw-bold mb-4">Bảng điều khiển quản trị</h3>
+    
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card p-4 bg-primary text-white">
+                <div class="small text-uppercase fw-bold opacity-75">Người dùng</div>
+                <div class="display-6 fw-bold">{{ stats.users }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4 bg-dark text-white">
+                <div class="small text-uppercase fw-bold opacity-75">Khóa học</div>
+                <div class="display-6 fw-bold">{{ stats.courses }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4 bg-warning text-dark">
+                <div class="small text-uppercase fw-bold opacity-75">Giảng viên chờ duyệt</div>
+                <div class="display-6 fw-bold">{{ stats.pending_lecturers }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-8">
+            <div class="card p-4 border shadow-sm">
+                <h5 class="fw-bold mb-4">Danh mục khóa học</h5>
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [{% for c in categories %}"{{ c.name }}",{% endfor %}],
+            datasets: [{
+                label: 'Số lượng khóa học',
+                data: [{% for c in categories %}{{ c.courses|length }},{% endfor %}],
+                backgroundColor: '#0d6efd'
+            }]
+        }
+    });
+</script>
+{% endblock %}

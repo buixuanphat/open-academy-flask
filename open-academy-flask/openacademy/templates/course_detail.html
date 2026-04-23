@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4 mb-5">
+    <a href="{{ url_for('load_courses') }}" class="text-decoration-none text-muted mb-4 d-inline-block">
+        <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
+    </a>
+
+    <div class="rounded-4 overflow-hidden mb-4 shadow-sm">
+        <img src="{{ course.image }}" class="w-100" style="height: 400px; object-fit: cover;">
+    </div>
+
+    <div class="mb-4">
+        <span class="badge bg-primary-soft text-primary px-3 py-2 rounded-pill mb-2">
+            {{ course.category.name if course.category else 'Lập trình Web' }}
+        </span>
+        <h1 class="fw-bold">{{ course.title }}</h1>
+    </div>
+
+    <div class="row g-3 mb-5">
+        <div class="col-md-3">
+            <div class="d-flex align-items-center p-3 bg-light rounded-4 border-0 shadow-sm h-100">
+                <div class="icon-box bg-blue-soft text-primary me-3">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Giảng viên</div>
+                    <div class="fw-bold">{{ course.lecturer.first_name }} {{ course.lecturer.last_name }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="d-flex align-items-center p-3 bg-light rounded-4 border-0 shadow-sm h-100">
+                <div class="icon-box bg-purple-soft text-purple me-3">
+                    <i class="fa-solid fa-chart-simple"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Trình độ</div>
+                    <div class="fw-bold">{{ course.level.value }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="d-flex align-items-center p-3 bg-light rounded-4 border-0 shadow-sm h-100">
+                <div class="icon-box bg-orange-soft text-warning me-3">
+                    <i class="fa-solid fa-dollar-sign"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Học phí</div>
+                    <div class="fw-bold text-dark">{{ "{:,.0f}".format(course.price) }} VNĐ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <h4 class="fw-bold mb-3"><i class="fa-solid fa-book-open me-2"></i> Mô tả khóa học</h4>
+            <p class="text-muted lh-lg mb-5">{{ course.description }}</p>
+
+            <h4 class="fw-bold mb-4">Nội dung chính</h4>
+            <div class="list-group border-0">
+                {% for s in course.sections %}
+                <div class="list-group-item border-0 bg-light rounded-4 mb-3 p-3 d-flex align-items-center">
+                    <span class="badge bg-primary rounded-circle me-3 p-2"
+                          style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                            {{ loop.index }}
+                    </span>
+
+                    <div>
+                        <div class="fw-bold">{{ s.title }}</div>
+                        <div class="text-muted small">
+                            {{ s.lessons|length }} bài học
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+
+            <form class="mt-5 d-flex gap-3" action="{{ url_for('payment') }}" method="POST">
+                <input type="hidden" name="amount" value="{{ course.price }}">
+                <input type="hidden" name="course_id" value="{{ course.id }}">
+                <input type="hidden" name="order_desc" value="Thanh toan khoa hoc: {{ course.title }}">
+
+                {% if course.id in enrolled_ids or course.price == 0 %}
+                {% set first_lesson = course.sections[0].lessons[0] %}
+
+                <div class="mt-5 d-flex gap-3">
+                    {% if course.id in enrolled_ids %}
+                    {# TRƯỜNG HỢP 1: ĐÃ ĐĂNG KÝ RỒI #}
+                    {% set first_lesson = course.sections[0].lessons[0] %}
+                    <a href="{{ url_for('learning', course_id=course.id, lesson_id=first_lesson.id) }}"
+                       class="btn btn-success btn-lg px-5 py-3 rounded-3 flex-grow-1 fw-bold text-decoration-none">
+                        <i class="fa-solid fa-play me-2"></i> Tiếp tục học
+                    </a>
+
+                    {% elif course.price == 0 %}
+                    {# TRƯỜNG HỢP 2: CHƯA ĐĂNG KÝ VÀ LÀ KHÓA 0Đ #}
+                    <a href="{{ url_for('enroll_free', course_id=course.id) }}"
+                       class="btn btn-success btn-lg px-5 py-3 rounded-3 flex-grow-1 fw-bold text-decoration-none">
+                        <i class="fa-solid fa-bolt me-2"></i> Đăng ký & Học ngay (Miễn phí)
+                    </a>
+
+                    {% else %}
+                    {# TRƯỜNG HỢP 3: CHƯA ĐĂNG KÝ VÀ CÓ PHÍ (THANH TOÁN) #}
+                    <form action="{{ url_for('payment') }}" method="POST" class="flex-grow-1">
+                        <input type="hidden" name="course_id" value="{{ course.id }}">
+                        <input type="hidden" name="amount" value="{{ course.price }}">
+                        <input type="hidden" name="order_desc" value="Thanh toan: {{ course.title }}">
+                        <button type="submit" class="btn btn-primary btn-lg px-5 py-3 rounded-3 w-100 fw-bold">
+                            <i class="fa-solid fa-cart-shopping me-2"></i> Đăng ký ngay - {{
+                            "{:,.0f}".format(course.price) }}đ
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% else %}
+                <form action="{{ url_for('payment') }}" method="POST" class="flex-grow-1">
+                    <input type="hidden" name="course_id" value="{{ course.id }}">
+                    <input type="hidden" name="amount" value="{{ course.price }}">
+                    <input type="hidden" name="order_desc" value="Thanh toan: {{ course.title }}">
+                    <button type="submit" class="btn btn-primary btn-lg px-5 py-3 rounded-3 w-100 fw-bold">
+                        <i class="fa-solid fa-cart-shopping me-2"></i> Đăng ký ngay
+                    </button>
+                </form>
+                {% endif %}
+
+
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

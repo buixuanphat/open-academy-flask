@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="fw-bold mb-4">Khóa học của tôi</h2>
+
+    <form action="{{ url_for('load_my_courses') }}" method="GET">
+        <div class="input-group input-group-lg mb-4 shadow-sm">
+            <span class="input-group-text bg-white border-end-0">
+                <i class="fa-solid fa-magnifying-glass text-muted"></i>
+            </span>
+            <input type="text" name="kw" class="form-control border-start-0 ps-0"
+                   placeholder="Tìm kiếm theo tên khóa học..." value="{{ request.args.get('kw', '') }}">
+        </div>
+    </form>
+
+    <hr class="mb-4">
+    <p class="text-muted mb-4">Tìm thấy <strong>{{ courses|length }}</strong> khóa học</p>
+
+    <div class="row g-4">
+        {% for c in courses %}
+<div class="col-md-4">
+    <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden position-relative">
+        <img src="{{ c.image }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+
+        <div class="card-body p-4">
+            <span class="badge bg-primary-soft text-primary mb-2">
+                {{ c.category.name if c.category else 'Lập trình' }}
+            </span>
+            <h5 class="card-title fw-bold mb-3">{{ c.title }}</h5>
+
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small text-muted fw-medium">Tiến độ học tập</span>
+                    <span class="small fw-bold text-success">{{ c.completed_lessons }}/{{ c.total_lessons }} bài</span>
+                </div>
+                <div class="progress" style="height: 8px; border-radius: 10px; background-color: #e9ecef;">
+                    <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                         role="progressbar"
+                         style="width: {{ c.progress_percent }}%"
+                         aria-valuenow="{{ c.progress_percent }}"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                    </div>
+                </div>
+                <div class="text-end mt-1">
+                    <span class="tiny fw-bold text-muted">{{ c.progress_percent }}%</span>
+                </div>
+            </div>
+
+            {% if c.sections and c.sections[0].lessons %}
+                {% set first_lesson = c.sections[0].lessons[0] %}
+                <a href="{{ url_for('learning', course_id=c.id, lesson_id=first_lesson.id) }}"
+                   class="btn btn-primary w-100 rounded-3 py-2 fw-bold shadow-sm mt-auto">
+                    <i class="fa-solid fa-circle-play me-2"></i> Học tiếp
+                </a>
+            {% else %}
+                <button class="btn btn-secondary w-100 rounded-3 py-2 fw-bold" disabled>
+                    Chưa có bài học
+                </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endfor %}
+    </div>
+</div>
+{% endblock %}

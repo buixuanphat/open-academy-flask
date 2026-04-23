@@ -1,0 +1,214 @@
+{% extends "layout/lecturer_base.html" %}
+
+{% block title %}Quản lý nội dung: {{ course.title }}{% endblock %}
+
+{% block content %}
+<style>
+    .breadcrumb-item a { color: #6c757d; font-size: 14px; text-decoration: none; }
+    .breadcrumb-item.active { color: #111; font-weight: 600; font-size: 14px; }
+    .accordion-item { border: 1px solid #e2e8f0 !important; margin-bottom: 1.2rem !important; border-radius: 12px !important; background: #fff; transition: all 0.3s ease; overflow: hidden; }
+    .accordion-item:hover { border-color: #cbd5e0 !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); }
+    .accordion-button { padding: 1.25rem 1.5rem; font-size: 1.05rem; background-color: #fff !important; box-shadow: none !important; }
+    .lesson-item { transition: all 0.2s; border-left: 3px solid transparent; border-bottom: 1px solid #f8fafc; }
+    .lesson-item:hover { background-color: #f8fafc; border-left-color: #111; }
+    .lesson-icon { width: 32px; height: 32px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #475569; }
+</style>
+
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{{ url_for('lecturer_dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Quản lý nội dung</li>
+                </ol>
+            </nav>
+            <h3 class="fw-bold mb-1">{{ course.title }}</h3>
+            <p class="text-muted mb-0 small">Thiết kế chương trình học và quản lý các bài giảng</p>
+        </div>
+        <button class="btn btn-dark shadow-sm rounded-3" data-bs-toggle="modal" data-bs-target="#addSectionModal">
+            <i class="bi bi-plus-lg me-2"></i>Thêm chương mới
+        </button>
+    </div>
+
+    <div class="accordion border-0" id="courseAccordion">
+        {% for section in sections %}
+        <div class="accordion-item border-0 shadow-sm">
+            <div class="accordion-header d-flex align-items-center bg-white" id="heading{{ section.id }}">
+                <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ section.id }}">
+                    <span class="me-3 text-muted fw-normal">#{{ loop.index }}</span> {{ section.title }}
+                </button>
+
+                <div class="d-flex pe-4 bg-white align-items-center">
+                    <button class="btn btn-link text-muted p-2 me-1"
+                            onclick="openEditSectionModal('{{ section.id }}', '{{ section.title }}')"
+                            data-bs-toggle="modal" data-bs-target="#editSectionModal">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <form action="{{ url_for('delete_section', section_id=section.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-link text-danger p-2" onclick="return confirm('Xóa chương này sẽ xóa tất cả bài học bên trong?')">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="collapse{{ section.id }}" class="accordion-collapse collapse" data-bs-parent="#courseAccordion">
+                <div class="accordion-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for lesson in section.lessons %}
+                        <div class="list-group-item lesson-item d-flex justify-content-between align-items-center py-3 px-4 border-0">
+                            <div class="d-flex align-items-center overflow-hidden pe-3">
+                                <div class="lesson-icon me-3"><i class="bi bi-play-fill"></i></div>
+                                <div class="text-truncate">
+                                    <div class="fw-semibold text-dark">{{ lesson.title }}</div>
+                                    <small class="text-muted">Video bài giảng • Đã tải lên</small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center flex-shrink-0 gap-2">
+                                <button class="btn btn-outline-dark btn-sm rounded-pill px-3"
+                                        onclick="openEditLessonModal('{{ lesson.id }}', '{{ lesson.title|e }}', '{{ lesson.content|e }}')"
+                                        data-bs-toggle="modal" data-bs-target="#editLessonModal">Sửa</button>
+                                <form action="{{ url_for('delete_lesson', lesson_id=lesson.id) }}" method="POST" class="m-0">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="return confirm('Xóa bài học này?')">Xóa</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4 bg-light"><small class="text-muted">Chương này chưa có nội dung.</small></div>
+                        {% endfor %}
+                    </div>
+                    <div class="p-3 bg-white text-center border-top">
+                        <button class="btn btn-sm btn-link text-primary text-decoration-none fw-bold"
+                                onclick="openAddLessonModal('{{ section.id }}', '{{ section.title }}')"
+                                data-bs-toggle="modal" data-bs-target="#addLessonModal">
+                            <i class="bi bi-plus-circle-fill me-1"></i> Thêm bài học mới
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="modal fade" id="addSectionModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="{{ url_for('add_section', course_id=course.id) }}" method="POST" class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-bold">Tạo chương học mới</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Tên chương</label>
+                    <input type="text" name="name" class="form-control rounded-3" placeholder="Nhập tiêu đề chương..." required>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="submit" class="btn btn-dark w-100 rounded-3">Lưu chương</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="editSectionModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form id="editSectionForm" action="" method="POST" class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-bold">Sửa tên chương</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Tên chương mới</label>
+                    <input type="text" name="name" id="edit_section_name" class="form-control rounded-3" required>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="submit" class="btn btn-dark w-100 rounded-3">Cập nhật</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="addLessonModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form action="{{ url_for('add_lesson') }}" method="POST" enctype="multipart/form-data" class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-dark text-white border-0">
+                <h6 class="modal-title fw-bold" id="addLessonModalTitle">Thêm bài học</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" name="section_id" id="modal_add_section_id">
+                <input type="hidden" name="course_id" value="{{ course.id }}">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label small fw-bold">Tiêu đề bài học</label>
+                        <input type="text" name="title" class="form-control rounded-3" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-bold">Video bài giảng</label>
+                        <input type="file" name="video" class="form-control rounded-3" accept="video/*" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-bold">Mô tả tóm tắt</label>
+                        <textarea name="content" class="form-control rounded-3" rows="4"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="submit" class="btn btn-primary px-4 fw-bold rounded-3">Bắt đầu Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="editLessonModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form id="editLessonForm" action="" method="POST" enctype="multipart/form-data" class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-secondary text-white border-0">
+                <h6 class="modal-title fw-bold">Chỉnh sửa bài học</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label small fw-bold">Tiêu đề bài học</label>
+                        <input type="text" name="title" id="edit_lesson_title" class="form-control rounded-3" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-bold">Video mới (Để trống nếu không đổi)</label>
+                        <input type="file" name="video" class="form-control rounded-3" accept="video/*">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-bold">Mô tả</label>
+                        <textarea name="content" id="edit_lesson_content" class="form-control rounded-3" rows="4"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="submit" class="btn btn-dark px-4 fw-bold rounded-3">Cập nhật</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openAddLessonModal(sectionId, sectionTitle) {
+    document.getElementById('modal_add_section_id').value = sectionId;
+    document.getElementById('addLessonModalTitle').innerText = 'Thêm bài học cho: ' + sectionTitle;
+}
+
+function openEditSectionModal(id, title) {
+    document.getElementById('editSectionForm').action = "/lecturer/section/" + id + "/edit";
+    document.getElementById('edit_section_name').value = title;
+}
+
+function openEditLessonModal(id, title, content) {
+    document.getElementById('editLessonForm').action = "/lecturer/lesson/" + id + "/edit";
+    document.getElementById('edit_lesson_title').value = title;
+    document.getElementById('edit_lesson_content').value = content;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends "layout/lecturer_base.html" %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold m-0">{{ course.title }}</h2>
+            <p class="text-muted small">Nhấn vào từng chương để xem tiến độ bài học chi tiết</p>
+        </div>
+        <a href="{{ url_for('lecturer_statistics') }}" class="btn btn-dark btn-sm rounded-3">Quay lại</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card p-3 shadow-sm border-0 rounded-4 bg-light text-center">
+                <div class="text-muted small text-uppercase fw-bold">Học viên tham gia</div>
+                <div class="h4 m-0 fw-bold">{{ total_students }}</div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-3 shadow-sm border-0 rounded-4 bg-light text-center">
+                <div class="text-muted small text-uppercase fw-bold">Tổng số chương</div>
+                <div class="h4 m-0 fw-bold">{{ section_stats|length }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="accordion accordion-flush shadow-sm rounded-4 overflow-hidden border" id="accordionStats">
+        {% for section in section_stats %}
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading{{ loop.index }}">
+                <button class="accordion-button collapsed py-4" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}">
+                    <div class="w-100 d-flex justify-content-between align-items-center pe-3">
+                        <div>
+                            <span class="fw-bold text-dark">{{ section.title }}</span>
+                            <div class="small text-muted">{{ section.lessons|length }} bài giảng</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-primary rounded-pill">{{ section.rate }}% hoàn thành</span>
+                        </div>
+                    </div>
+                </button>
+            </h2>
+            <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#accordionStats">
+                <div class="accordion-body bg-white p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 shadow-none">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4" style="width: 50%">Tên bài học</th>
+                                    <th class="text-center" style="width: 20%">Hoàn thành</th>
+                                    <th class="pe-4" style="width: 30%">Tỷ lệ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lesson in section.lessons %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="small fw-medium">{{ lesson.title }}</div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="small text-muted">{{ lesson.completed_count }} / {{ total_students }}</span>
+                                    </td>
+                                    <td class="pe-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1" style="height: 5px;">
+                                                <div class="progress-bar bg-success" style="width: {{ lesson.rate }}%"></div>
+                                            </div>
+                                            <span class="ms-2 small fw-bold" style="font-size: 0.75rem;">{{ lesson.rate }}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not section_stats %}
+    <div class="text-center py-5">
+        <p class="text-muted italic">Khóa học này hiện chưa có nội dung bài giảng.</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    /* Tùy chỉnh để Accordion trông hiện đại hơn */
+    .accordion-button:not(.collapsed) {
+        background-color: #f8f9fa;
+        color: #000;
+        box-shadow: none;
+    }
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: rgba(0,0,0,.125);
+    }
+    .table td, .table th {
+        border-bottom: 1px solid #f0f0f0;
+        padding: 1rem 0.5rem;
+    }
+</style>
+{% endblock %}
