@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-5">
+
     <h2 class="fw-bold mb-4">Khóa học</h2>
 
-    <form action="{{ url_for('load_courses') }}" method="GET">
+    <form action="{{ url_for('load_courses') }}" method="GET" class="mb-5">
         <div class="input-group input-group-lg mb-4 shadow-sm">
             <span class="input-group-text bg-white border-end-0">
                 <i class="fa-solid fa-magnifying-glass text-muted"></i>
@@ -12,7 +13,7 @@
                    placeholder="Tìm kiếm theo tên khóa học..." value="{{ request.args.get('kw', '') }}">
         </div>
 
-        <div class="row g-3 mb-5">
+        <div class="row g-3">
             <div class="col-md-4">
                 <label class="fw-bold small mb-1"><i class="fa-solid fa-filter me-1"></i> Chủ đề</label>
                 <select name="category_id" class="form-select border-0 shadow-sm bg-light" onchange="this.form.submit()">
@@ -43,8 +44,40 @@
         </div>
     </form>
 
-    <hr class="mb-4">
-    <p class="text-muted mb-4">Tìm thấy <strong>{{ courses|length }}</strong> khóa học</p>
+    {% if recommended %}
+    <div class="mb-5 mt-5">
+        <h3 class="fw-bold mb-4">Dành riêng cho bạn</h3>
+        <div class="row g-4">
+            {% for r in recommended %}
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden">
+                    <img src="{{ r.image }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                    <div class="card-body p-4">
+                        <span class="badge bg-primary-soft text-primary mb-2">{{ r.category.name if r.category else 'Lập trình' }}</span>
+                        <h5 class="card-title fw-bold mb-3 text-truncate">{{ r.title }}</h5>
+                        <p class="card-text text-muted small mb-4" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            {{ r.description }}
+                        </p>
+                        <div class="d-flex align-items-center mb-2 text-muted small">
+                            <i class="fa-regular fa-user me-2"></i> {{ r.lecturer.first_name }} {{ r.lecturer.last_name }}
+                        </div>
+                        <div class="d-flex align-items-center text-muted small">
+                            <i class="fa-solid fa-chart-simple me-2"></i> {{ r.level.value }}
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-0 p-4 pt-0 d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-primary fs-5">{{ "{:,.0f}".format(r.price) }} VNĐ</span>
+                        <a href="{{ url_for('course_detail', course_id=r.id) }}" class="btn btn-primary px-4 rounded-pill">Xem chi tiết</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <hr class="my-5">
+    {% endif %}
+
+    <p class="text-muted mb-4 mt-5">Tìm thấy <strong>{{ courses|length }}</strong> khóa học</p>
 
     <div class="row g-4">
         {% for c in courses %}
@@ -53,23 +86,19 @@
                 <img src="{{ c.image }}" class="card-img-top" style="height: 200px; object-fit: cover;">
                 <div class="card-body p-4">
                     <span class="badge bg-primary-soft text-primary mb-2">{{ c.category.name if c.category else 'Lập trình' }}</span>
-                    <h5 class="card-title fw-bold mb-3">{{ c.title }}</h5>
+                    <h5 class="card-title fw-bold mb-3 text-truncate">{{ c.title }}</h5>
                     <p class="card-text text-muted small mb-4" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                         {{ c.description }}
                     </p>
-
                     <div class="d-flex align-items-center mb-2 text-muted small">
                         <i class="fa-regular fa-user me-2"></i> {{ c.lecturer.first_name }} {{ c.lecturer.last_name }}
-                    </div>
-                    <div class="d-flex align-items-center text-muted small mb-2">
-                        <i class="fa-sharp fa-solid fa-bullseye me-2"></i> {{ c.goal.value }}
                     </div>
                     <div class="d-flex align-items-center text-muted small">
                         <i class="fa-solid fa-chart-simple me-2"></i> {{ c.level.value }}
                     </div>
                 </div>
                 <div class="card-footer bg-white border-0 p-4 pt-0 d-flex justify-content-between align-items-center">
-                    <span class="fw-bold text-primary fs-5">$ {{ "{:,.0f}".format(c.price) }} VNĐ</span>
+                    <span class="fw-bold text-primary fs-5">{{ "{:,.0f}".format(c.price) }} VNĐ</span>
                     <a href="{{ url_for('course_detail', course_id=c.id) }}" class="btn btn-primary px-4 rounded-pill">Xem chi tiết</a>
                 </div>
             </div>
@@ -77,4 +106,14 @@
         {% endfor %}
     </div>
 </div>
+
+<style>
+    .bg-primary-soft {
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+    /* Thêm một chút padding cho thẻ hr nếu cần */
+    hr.my-5 {
+        border-top: 1px solid rgba(0,0,0,.1);
+    }
+</style>
 {% endblock %}

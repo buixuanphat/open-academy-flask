@@ -160,19 +160,28 @@ def logout():
 
 @app.route('/courses', methods=['GET'])
 def load_courses():
+    # 1. Lấy tham số tìm kiếm từ URL
     kw = request.args.get('kw')
     category_id = request.args.get('category_id')
     lecturer_id = request.args.get('lecturer_id')
     goal = request.args.get('goal')
     level = request.args.get('level')
 
+    # 2. Load danh sách khóa học theo bộ lọc
     courses = utils.load_courses(kw, category_id, lecturer_id, goal, level)
-
     categories = utils.load_categories()
     lecturers = utils.load_lecturers()
 
+    # 3. Logic gợi ý thông minh
+    recommended_courses = []
+    # Chỉ gợi ý cho Student đã đăng nhập và khi không có tham số tìm kiếm nào
+    if current_user.is_authenticated and current_user.role == UserRole.STUDENT:
+        if not any([kw, category_id, lecturer_id, goal, level]):
+            recommended_courses = utils.get_recommended_courses(user_id=current_user.id)
+
     return render_template('courses.html',
                            courses=courses,
+                           recommended=recommended_courses,
                            categories=categories,
                            lecturers=lecturers,
                            goals=models.StudyGoal,
