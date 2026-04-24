@@ -5,18 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="658c6a8e-fb6e-4626-acc6-cbaa96737d26" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/open-academy-flask.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/open-academy-flask/openacademy/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/templates/forum.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/open-academy-flask/openacademy/index.py" beforeDir="false" afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/index.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/open-academy-flask/openacademy/static/css/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/static/css/styles.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/open-academy-flask/openacademy/templates/lecturer_register.html" beforeDir="false" afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/templates/lecturer_register.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/open-academy-flask/openacademy/templates/login.html" beforeDir="false" afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/templates/login.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/open-academy-flask/openacademy/templates/student_register.html" beforeDir="false" afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/templates/student_register.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/open-academy-flask/openacademy/templates/learning.html" beforeDir="false" afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/templates/learning.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/open-academy-flask/openacademy/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -249,7 +241,7 @@
       <workItem from="1776855545425" duration="1940000" />
       <workItem from="1776883479430" duration="3519000" />
       <workItem from="1777038309933" duration="303000" />
-      <workItem from="1777038629502" duration="7189000" />
+      <workItem from="1777038629502" duration="8263000" />
     </task>
     <servers />
   </component>

@@ -286,6 +286,21 @@ def update_progress():
     return jsonify({"status": "success"}), 200
 
 
+@app.route('/enroll-free/<int:course_id>')
+@login_required
+def enroll_free(course_id):
+    course = Course.query.get_or_404(course_id)
+
+    if course.price == 0:
+        msg = utils.create_enrollment(current_user.id, course_id, 0)
+
+        if course.sections and course.sections[0].lessons:
+            first_lesson_id = course.sections[0].lessons[0].id
+            return redirect(url_for('learning', course_id=course.id, lesson_id=first_lesson_id))
+
+    return redirect(url_for('course_detail', course_id=course_id))
+
+
 # ==========================
 # PAYMENT (VNPAY)
 # ==========================
@@ -396,6 +411,32 @@ def course_stats_detail(course_id):
     if data['course'].lecturer_id != current_user.id: abort(403)
     return render_template('lecturer/course_stats_detail.html', **data)
 
+
+@app.route('/api/lessons/<int:lesson_id>/comments', methods=['POST'])
+@login_required
+def add_comment_api(lesson_id):
+    data = request.json
+    content = data.get('content')
+    parent_id = data.get('parent_id')  # Có thể None nếu là comment chính
+
+    if content:
+        c = utils.add_comment(content=content,
+                              lesson_id=lesson_id,
+                              user_id=current_user.id,
+                              parent_id=parent_id)
+
+        # Trả về JSON để JS tự render thêm vào giao diện mà không cần load lại trang
+        return jsonify({
+            "id": c.id,
+            "content": c.content,
+            "created_date": c.created_date.strftime('%d/%m/%Y %H:%M'),
+            "user": {
+                "full_name": f"{current_user.last_name} {current_user.first_name}",
+                "avatar": current_user.avatar or "https://via.placeholder.com/50"
+            }
+        }), 201
+
+    return jsonify({"error": "Nội dung không được trống"}), 400
 
 # ==========================
 # RUN APP

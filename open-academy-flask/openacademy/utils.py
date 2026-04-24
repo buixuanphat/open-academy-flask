@@ -423,3 +423,14 @@ def stats_revenue(kw=None, from_date=None, to_date=None):
         query = query.filter(Enrollment.created_date <= to_date)
 
     return query.group_by(Course.id).all()
+
+
+
+def add_comment(content, lesson_id, user_id, parent_id=None):
+    c = Comment(content=content,
+                lesson_id=lesson_id,
+                user_id=user_id,
+                parent_id=parent_id)
+    db.session.add(c)
+    db.session.commit()
+    return c
