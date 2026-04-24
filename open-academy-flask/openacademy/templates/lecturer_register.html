@@ -21,32 +21,40 @@
     <div class="form-section">
         <h1 class="mb-5">Đăng ký tài khoản giảng viên</h1>
 
+        {% if google_data %}
+        <div class="alert alert-info">
+            Đang đăng ký bằng Google: <strong>{{ google_data.email }}</strong>
+        </div>
+        {% endif %}
+
         {% if err_msg %}
         <div class="alert alert-danger">
             <h4>{{ err_msg }}</h4>
         </div>
         {% endif %}
 
-        <form method="POST" action="{{ url_for('lecturer_register') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('lecturer_register', method='google' if google_data else 'manual') }}" enctype="multipart/form-data">
             <div class="row">
                 <div class="col-md-6">
                     <label class="medium ms-1">Họ</label>
                     <input name="last_name" required class="text-input mt-1 flex-1" type="text"
-                           placeholder="Nhập họ..."/>
+                           placeholder="Nhập họ..." value="{{ google_data.last_name if google_data else '' }}"/>
                 </div>
                 <div class="col-md-6">
                     <label class="medium ms-1">Tên</label>
                     <input name="first_name" required class="text-input mt-1 flex-1" type="text"
-                           placeholder="Nhập tên..."/>
+                           placeholder="Nhập tên..." value="{{ google_data.first_name if google_data else '' }}"/>
                 </div>
             </div>
 
             <div class="mt-3">
                 <label class="medium ms-1">Email</label>
                 <input name="email" required class="text-input mt-1 flex-1" type="email"
-                       placeholder="Nhập địa chỉ email..."/>
+                       placeholder="Nhập địa chỉ email..." value="{{ google_data.email if google_data else '' }}"
+                       {% if google_data %}readonly{% endif %}/>
             </div>
 
+            {% if not google_data %}
             <div class="row mt-3">
                 <div class="col-md-6">
                     <label class="medium ms-1">Mật khẩu</label>
@@ -59,6 +67,7 @@
                            placeholder="Nhập lại mật khẩu..."/>
                 </div>
             </div>
+            {% endif %}
 
             <div class="mt-3">
                 <label class="medium ms-1">Giới thiệu</label>
@@ -68,9 +77,11 @@
 
             <div class="mt-3">
                 <label class="medium ms-1">Ảnh đại diện</label>
-                <input name="avatar" id="avatar-input" required class="text-input mt-1 flex-1" type="file"
+                <input name="avatar" id="avatar-input" {% if not google_data %}required{% endif %} class="text-input mt-1 flex-1" type="file"
                        accept="image/*"/>
-                <img id="avatar-preview" class="preview-img" src="#" alt="Avatar Preview"/>
+                <img id="avatar-preview" class="preview-img"
+                     src="{{ google_data.avatar if google_data else '#' }}"
+                     style="display: {{ 'block' if google_data else 'none' }}; width: 100px; margin-top: 10px;" alt="Avatar Preview"/>
             </div>
 
             <hr class="my-4">
@@ -84,11 +95,38 @@
                 </button>
             </div>
 
-            <div class="login-btn" onclick="this.closest('form').submit();">
+            <div class="login-btn">
                 <i class="fa-solid fa-user-plus"></i>
                 <button type="submit">ĐĂNG KÝ NGAY</button>
             </div>
+
+            {% if not google_data %}
+            <div class="login-btn-google">
+                <i class="fa-brands fa-google"></i>
+                <a href="{{ url_for('login_google', role='lecturer') }}">TIẾP TỤC VỚI GOOGLE</a>
+            </div>
+            {% endif %}
         </form>
     </div>
 </div>
+
+<script>
+    function addDegreeRow() {
+        const container = document.getElementById('degree-container');
+        const row = document.createElement('div');
+        row.className = 'degree-row row mb-2';
+        row.innerHTML = `
+            <div class="col-md-5">
+                <input type="text" name="degree_names[]" class="text-input" placeholder="Tên bằng cấp (VD: IELTS 8.0)">
+            </div>
+            <div class="col-md-5">
+                <input type="file" name="degree_files[]" class="text-input" accept="image/*,application/pdf">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()">Xóa</button>
+            </div>
+        `;
+        container.appendChild(row);
+    }
+</script>
 {% endblock %}
