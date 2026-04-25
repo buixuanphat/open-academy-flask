@@ -14,12 +14,9 @@ import hashlib
 import uuid
 
 def add_lecturer(last_name, first_name, email, password, avatar, bio, degrees):
-    # CHỖ NÀY QUAN TRỌNG: Chỉ encode khi password không phải None
     if password:
         password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
     else:
-        # Nếu đăng ký bằng Google, mật khẩu sẽ để trống hoặc gán ngẫu nhiên
-        # Nếu DB của ông để nullable=False thì dùng dòng dưới:
         password = str(hashlib.md5(str(uuid.uuid4()).encode('utf-8')).hexdigest())
 
     new_lecturer = Lecturer(
@@ -53,11 +50,9 @@ def add_lecturer(last_name, first_name, email, password, avatar, bio, degrees):
 
 
 def add_student(last_name, first_name, email, password, avatar, goal, level):
-    # Tương tự như trên, check password trước khi encode
     if password:
         password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
     else:
-        # Tạo pass ngẫu nhiên cho user Google để tránh lỗi DB ràng buộc NOT NULL
         password = str(hashlib.md5(str(uuid.uuid4()).encode('utf-8')).hexdigest())
 
     new_student = Student(
@@ -143,17 +138,48 @@ def load_progress(student_id, lesson_id):
     return 0
 
 
-def update_progress(student_id, lesson_id, percent):
+def update_progress(student_id, lesson_id, percent, is_completed):
+    # 1. Cập nhật hoặc tạo mới tiến độ bài học
     progress = Progress.query.filter_by(student_id=student_id, lesson_id=lesson_id).first()
 
-    if progress:
-        if percent > progress.percent:
-            progress.percent = percent
+    if not progress:
+        progress = Progress(student_id=student_id, lesson_id=lesson_id, percent=percent, is_completed=is_completed)
+        db.session.add(progress)
     else:
-        new_progress = Progress(student_id=student_id, lesson_id=lesson_id, percent=percent)
-        db.session.add(new_progress)
+        progress.percent = max(progress.percent, percent)
+        # Nếu đã từng hoàn thành thì giữ True, nếu chưa thì cập nhật theo data mới
+        if not progress.is_completed:
+            progress.is_completed = is_completed
 
     db.session.commit()
+
+    # 2. Logic kiểm tra hoàn thành khóa học
+    course_finished = False
+    if is_completed:
+        # Lấy lesson hiện tại để tìm ra khóa học (Course)
+        current_lesson = Lesson.query.get(lesson_id)
+        course_id = current_lesson.section.course_id
+
+        # Lấy danh sách tất cả ID bài học của khóa học này
+        all_lesson_ids = db.session.query(Lesson.id).join(Section).filter(Section.course_id == course_id).all()
+        all_lesson_ids = [l[0] for l in all_lesson_ids]
+
+        # Đếm số bài học mà sinh viên này đã hoàn thành trong khóa học này
+        completed_count = Progress.query.filter(
+            Progress.student_id == student_id,
+            Progress.lesson_id.in_(all_lesson_ids),
+            Progress.is_completed == True
+        ).count()
+
+        # Nếu số bài đã học xong == tổng số bài của khóa học
+        if completed_count == len(all_lesson_ids):
+            enrollment = Enrollment.query.filter_by(student_id=student_id, course_id=course_id).first()
+            if enrollment and not enrollment.finish:
+                enrollment.finish = True
+                course_finished = True
+                db.session.commit()
+
+    return course_finished
 
 
 def calculate_course_progress(student_id, course_id):
@@ -426,10 +452,11 @@ def stats_revenue(kw=None, from_date=None, to_date=None):
 
 
 
-def add_comment(content, lesson_id, user_id, parent_id=None):
+def add_comment(content, lesson_id, user_id, image=None, parent_id=None):
     c = Comment(content=content,
                 lesson_id=lesson_id,
                 user_id=user_id,
+                image=image,
                 parent_id=parent_id)
     db.session.add(c)
     db.session.commit()

@@ -75,57 +75,69 @@ function previewPDF(input, id) {
 }
 
 
-// Cập nhật tiến độ
+// Cập nhật tiến độ trong main.js
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.querySelector('#video-container');
 
     if (container) {
         const studentId = container.dataset.studentId;
         const lessonId = container.dataset.lessonId;
+        const videoElement = document.querySelector('#lessonVideo');
         let maxPercent = parseInt(container.dataset.percent) || 0;
 
-        const videoElement = document.querySelector('#lessonVideo');
-
         if (videoElement) {
+            // Nhảy đến đoạn đang xem dở
             videoElement.addEventListener('loadedmetadata', () => {
                 if (maxPercent > 0 && maxPercent < 100) {
-                    const seekTime = (maxPercent * videoElement.duration) / 100;
-                    videoElement.currentTime = seekTime;
+                    videoElement.currentTime = (maxPercent * videoElement.duration) / 100;
                 }
             });
 
+            // Theo dõi tiến độ khi đang xem
             videoElement.addEventListener('timeupdate', () => {
                 if (!videoElement.duration) return;
                 const percent = Math.round((videoElement.currentTime / videoElement.duration) * 100);
 
+                // Chỉ gửi request khi phần trăm mới lớn hơn phần trăm cũ đã lưu
                 if (percent > maxPercent) {
                     maxPercent = percent;
-                    saveProgress(maxPercent, studentId, lessonId);
+                    const isCompleted = maxPercent >= 90; // Ngưỡng 90%
+                    saveProgress(maxPercent, studentId, lessonId, isCompleted);
                 }
             });
         }
     }
 });
 
-function saveProgress(percent, student_id, lesson_id) {
+function saveProgress(percent, student_id, lesson_id, is_completed) {
     fetch('/update-progress', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             student_id: student_id,
             lesson_id: lesson_id,
-            percent: percent
+            percent: percent,
+            is_completed: is_completed
         })
     })
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            console.log(`Server: Đã cập nhật thành công ${percent}%`);
+            console.log(`Đã lưu: ${percent}% | Hoàn thành: ${is_completed}`);
+
+            // Cập nhật con số hiển thị trên giao diện ngay lập tức (không cần reload)
+            const progressText = document.querySelector('#course-progress-text');
+            const progressBar = document.querySelector('#course-progress-bar');
+            if (data.new_course_progress && progressText && progressBar) {
+                progressText.innerText = `${data.new_course_progress}%`;
+                progressBar.style.width = `${data.new_course_progress}%`;
+            }
+
+            if (data.course_finished) {
+                alert("Chúc mừng! Phát đã hoàn thành toàn bộ khóa học này!");
+                location.reload();
+            }
         }
     })
-    .catch((error) => {
-        console.error('Lỗi khi gửi fetch:', error);
-    });
+    .catch(error => console.error('Lỗi fetch:', error));
 }

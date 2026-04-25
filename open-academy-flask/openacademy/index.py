@@ -280,10 +280,21 @@ def learning(course_id, lesson_id):
 
 @app.route('/update-progress', methods=['POST'])
 @login_required
-def update_progress():
+def handle_update_progress(progress_data=None):
     data = request.get_json()
-    utils.update_progress(data.get('student_id'), data.get('lesson_id'), data.get('percent'))
-    return jsonify({"status": "success"}), 200
+    student_id = data.get('student_id')
+    lesson_id = data.get('lesson_id')
+    percent = data.get('percent')
+    is_completed = data.get('is_completed', False)
+
+    # Gọi hàm xử lý ở utils
+    course_finished = utils.update_progress(student_id, lesson_id, percent, is_completed)
+
+    return jsonify({
+        "status": "success",
+        "course_finished": course_finished,
+        "new_course_progress": progress_data[2]
+    }), 200
 
 
 @app.route('/enroll-free/<int:course_id>')
@@ -415,28 +426,35 @@ def course_stats_detail(course_id):
 @app.route('/api/lessons/<int:lesson_id>/comments', methods=['POST'])
 @login_required
 def add_comment_api(lesson_id):
-    data = request.json
-    content = data.get('content')
-    parent_id = data.get('parent_id')  # Có thể None nếu là comment chính
+    content = request.form.get('content')
+    parent_id = request.form.get('parent_id')
+    file = request.files.get('image')
 
-    if content:
-        c = utils.add_comment(content=content,
-                              lesson_id=lesson_id,
-                              user_id=current_user.id,
-                              parent_id=parent_id)
+    # Gọi hàm upload của ông từ utils
+    image_url = utils.upload_to_cloudinary(file) if file else None
 
-        # Trả về JSON để JS tự render thêm vào giao diện mà không cần load lại trang
-        return jsonify({
-            "id": c.id,
-            "content": c.content,
-            "created_date": c.created_date.strftime('%d/%m/%Y %H:%M'),
-            "user": {
-                "full_name": f"{current_user.last_name} {current_user.first_name}",
-                "avatar": current_user.avatar or "https://via.placeholder.com/50"
-            }
-        }), 201
+    if content or image_url:
+        try:
+            c = utils.add_comment(content=content,
+                                  lesson_id=lesson_id,
+                                  user_id=current_user.id,
+                                  image=image_url,
+                                  parent_id=parent_id)
+            return jsonify({
+                "id": c.id,
+                "content": c.content,
+                "image": c.image,
+                "created_date": c.created_date.strftime('%H:%M %d/%m'),
+                "user": {
+                    "full_name": f"{current_user.last_name} {current_user.first_name}",
+                    "avatar": current_user.avatar
+                }
+            }), 201
+        except Exception as e:
+            print(f"Lỗi DB: {e}")
+            return jsonify({"error": "Lỗi lưu bình luận"}), 500
 
-    return jsonify({"error": "Nội dung không được trống"}), 400
+    return jsonify({"error": "Nội dung hoặc ảnh không được trống"}), 400
 
 # ==========================
 # RUN APP
