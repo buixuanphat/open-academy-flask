@@ -87,7 +87,7 @@ def callback():
         client_config,
         scopes=GOOGLE_SCOPES,
         state=state,
-        redirect_uri="http://127.0.0.1:5000/callback"
+        redirect_uri="https://open-academy.onrender.com/callback"
     )
     local_flow.code_verifier = cv
 
