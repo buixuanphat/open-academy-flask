@@ -104,7 +104,7 @@ class LogoutView(AuthenticatedView):
     @expose('/')
     def index(self):
         logout_user()
-        return redirect('/admin')
+        return redirect('/login')
 
 
 # ==========================================

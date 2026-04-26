@@ -439,33 +439,28 @@ def delete_lesson(lesson_id):
     return redirect(url_for('manage_course', course_id=course_id))
 
 
-@app.route('/lecturer/lesson/<int:lesson_id>/edit', methods=['POST'])
+@app.route('/lecturer/lesson/<int:lesson_id>/edit', methods=['POST'])  # Chỉ cần POST vì ta dùng Modal
 @login_required
 def edit_lesson(lesson_id):
     lesson = Lesson.query.get_or_404(lesson_id)
 
-    # Kiểm tra quyền chủ sở hữu khóa học
+    # Kiểm tra quyền
     if lesson.section.course.lecturer_id != current_user.id:
         return "Từ chối truy cập", 403
 
-    # Cập nhật thông tin chữ
+    # Cập nhật
     lesson.title = request.form.get('title')
     lesson.content = request.form.get('content')
 
-    # Xử lý nếu giảng viên tải lên video mới
     video_file = request.files.get('video')
-    if video_file and video_file.filename != '':
-        # Sử dụng hàm upload đã viết trong utils
+    if video_file:
+        # Sử dụng hàm upload bạn đã viết trong utils
         video_url = utils.upload_to_cloudinary(video_file, folder="e_course/lessons", resource_type="video")
-        lesson.video = video_url
+        if video_url:
+            lesson.video = video_url
 
-    try:
-        db.session.commit()
-        flash("Cập nhật bài học thành công!", "success")
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Lỗi: {str(e)}", "danger")
-
+    db.session.commit()
+    flash("Cập nhật thành công!", "success")
     return redirect(url_for('manage_course', course_id=lesson.section.course_id))
 
 
