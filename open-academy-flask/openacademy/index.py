@@ -9,6 +9,7 @@ from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport import requests as google_requests
 import cloudinary.uploader
+from sqlalchemy import func
 
 from openacademy import app, utils, models, login, db, VNPAY_TMN_CODE, VNPAY_RETURN_URL, VNPAY_PAYMENT_URL, \
     VNPAY_HASH_SECRET, GOOGLE_CLIENT_ID, CLIENT_SECRETS_FILE
@@ -29,7 +30,6 @@ def user_load(user_id):
 @app.route('/login-google')
 @app.route('/login-google/<role>')
 def login_google(role='STUDENT'):
-    # Khởi tạo Flow cục bộ để tránh xung đột session
     local_flow = Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE,
         scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email",
@@ -37,7 +37,6 @@ def login_google(role='STUDENT'):
         redirect_uri="http://127.0.0.1:5000/callback"
     )
 
-    # PKCE: Tự tạo code_verifier để diệt lỗi (invalid_grant) Missing code verifier
     code_verifier = secrets.token_urlsafe(64)
     session['code_verifier'] = code_verifier
 
@@ -87,14 +86,12 @@ def callback():
             'avatar': id_info.get("picture")
         }
 
-        # Kiểm tra user tồn tại chưa
         user = utils.get_user_by_email(email=google_user['email'])
         if user:
             login_user(user)
             session.pop('google_user', None)
             return redirect(url_for('home'))
 
-        # Lưu thông tin Google vào session để đổ vào form đăng ký
         session['google_user'] = google_user
         if role == 'lecturer':
             return redirect(url_for('lecturer_register', method='google'))
@@ -133,7 +130,6 @@ def lecturer_register():
                     res_avatar = cloudinary.uploader.upload(avatar_file)
                     avatar_url = res_avatar.get('secure_url')
 
-                # Xử lý bằng cấp
                 degree_files = request.files.getlist('degree_files[]')
                 degree_names = request.form.getlist('degree_names[]')
                 degrees_data = []
@@ -246,12 +242,36 @@ def logout():
 
 @app.route('/courses')
 def load_courses():
-    courses = utils.load_courses(
-        request.args.get('kw'), request.args.get('category_id'),
-        request.args.get('lecturer_id'), request.args.get('goal'), request.args.get('level')
-    )
-    return render_template('courses.html', courses=courses, categories=utils.load_categories(),
-                           lecturers=utils.load_lecturers(), goals=models.StudyGoal, levels=models.StudentLevel)
+    kw = request.args.get('kw')
+    category_id = request.args.get('category_id')
+    lecturer_id = request.args.get('lecturer_id')
+    goal = request.args.get('goal')
+    level = request.args.get('level')
+
+    courses = utils.load_courses(kw, category_id, lecturer_id, goal, level)
+    categories = utils.load_categories()
+    lecturers = utils.load_lecturers()
+
+    recommended_courses = []
+    if current_user.is_authenticated and current_user.role == UserRole.STUDENT:
+        if not any([kw, category_id, lecturer_id, goal, level]):
+            recommended_courses = utils.get_recommended_courses(user_id=current_user.id)
+
+    return render_template('courses.html',
+                           courses=courses,
+                           recommended=recommended_courses,
+                           categories=categories,
+                           lecturers=lecturers,
+                           goals=models.StudyGoal,
+                           levels=models.StudentLevel)
+
+
+@app.route('/my-courses')
+@login_required
+def load_my_courses():
+    kw = request.args.get('kw')
+    courses = utils.load_my_courses(current_user.id, kw)
+    return render_template('my_courses.html', courses=courses)
 
 
 @app.route('/courses/<int:course_id>')
@@ -260,12 +280,6 @@ def course_detail(course_id):
     enrolled_ids = [en.course_id for en in
                     utils.load_enrollments(current_user.id)] if current_user.is_authenticated else []
     return render_template('course_detail.html', course=course, enrolled_ids=enrolled_ids)
-
-
-@app.route('/my-courses')
-@login_required
-def load_my_courses():
-    return render_template('my_courses.html', courses=utils.load_my_courses(current_user.id, request.args.get('kw')))
 
 
 @app.route('/learning/<int:course_id>/<int:lesson_id>')
@@ -280,20 +294,18 @@ def learning(course_id, lesson_id):
 
 @app.route('/update-progress', methods=['POST'])
 @login_required
-def handle_update_progress(progress_data=None):
+def handle_update_progress():
     data = request.get_json()
     student_id = data.get('student_id')
     lesson_id = data.get('lesson_id')
     percent = data.get('percent')
     is_completed = data.get('is_completed', False)
 
-    # Gọi hàm xử lý ở utils
     course_finished = utils.update_progress(student_id, lesson_id, percent, is_completed)
 
     return jsonify({
         "status": "success",
-        "course_finished": course_finished,
-        "new_course_progress": progress_data[2]
+        "course_finished": course_finished
     }), 200
 
 
@@ -301,14 +313,11 @@ def handle_update_progress(progress_data=None):
 @login_required
 def enroll_free(course_id):
     course = Course.query.get_or_404(course_id)
-
     if course.price == 0:
-        msg = utils.create_enrollment(current_user.id, course_id, 0)
-
+        utils.create_enrollment(current_user.id, course_id, 0)
         if course.sections and course.sections[0].lessons:
             first_lesson_id = course.sections[0].lessons[0].id
             return redirect(url_for('learning', course_id=course.id, lesson_id=first_lesson_id))
-
     return redirect(url_for('course_detail', course_id=course_id))
 
 
@@ -376,6 +385,21 @@ def create_course():
     return render_template('lecturer/create_course.html', categories=Category.query.all(), goals=StudyGoal,
                            levels=StudentLevel)
 
+# --- HÀM XÓA KHÓA HỌC (FIX LỖI 500) ---
+@app.route('/lecturer/course/<int:course_id>/delete', methods=['POST'])
+@login_required
+def delete_course(course_id):
+    course = Course.query.get_or_404(course_id)
+    if course.lecturer_id != current_user.id: abort(403)
+    try:
+        db.session.delete(course)
+        db.session.commit()
+        flash("Đã xóa khóa học thành công!", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Lỗi: {str(e)}", "danger")
+    return redirect(url_for('lecturer_dashboard'))
+
 
 @app.route('/lecturer/course/<int:course_id>/manage')
 @login_required
@@ -397,12 +421,95 @@ def add_section(course_id):
 @app.route('/lecturer/course/lesson/add', methods=['POST'])
 @login_required
 def add_lesson():
+    course_id = request.form.get('course_id')
     try:
         utils.add_lesson_to_section(request.form, request.files.get('video'))
     except Exception as e:
-        flash(str(e), "danger")
-    return redirect(url_for('manage_course', course_id=request.form.get('course_id')))
+        flash(f"Lỗi: {str(e)}", "danger")
+    return redirect(url_for('manage_course', course_id=course_id))
 
+
+@app.route('/lecturer/section/<int:section_id>/delete', methods=['POST'])
+@login_required
+def delete_section(section_id):
+    section = Section.query.get_or_404(section_id)
+    course_id = section.course_id
+    if section.course.lecturer_id != current_user.id: return "Từ chối truy cập", 403
+    try:
+        db.session.delete(section)
+        db.session.commit()
+        flash("Đã xóa chương thành công!", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Lỗi: {str(e)}", "danger")
+    return redirect(url_for('manage_course', course_id=course_id))
+
+
+@app.route('/lecturer/lesson/<int:lesson_id>/delete', methods=['POST'])
+@login_required
+def delete_lesson(lesson_id):
+    lesson = Lesson.query.get_or_404(lesson_id)
+    course_id = lesson.section.course_id
+    if lesson.section.course.lecturer_id != current_user.id: return "Từ chối truy cập", 403
+    db.session.delete(lesson)
+    db.session.commit()
+    flash("Đã xóa bài học!", "success")
+    return redirect(url_for('manage_course', course_id=course_id))
+
+
+@app.route('/lecturer/lesson/<int:lesson_id>/edit', methods=['POST'])
+@login_required
+def edit_lesson(lesson_id):
+    lesson = Lesson.query.get_or_404(lesson_id)
+    if lesson.section.course.lecturer_id != current_user.id: return "Từ chối truy cập", 403
+    lesson.title = request.form.get('title')
+    lesson.content = request.form.get('content')
+    video_file = request.files.get('video')
+    if video_file:
+        video_url = utils.upload_to_cloudinary(video_file, folder="e_course/lessons", resource_type="video")
+        if video_url: lesson.video = video_url
+    db.session.commit()
+    flash("Cập nhật thành công!", "success")
+    return redirect(url_for('manage_course', course_id=lesson.section.course_id))
+
+
+@app.route('/lecturer/section/<int:section_id>/edit', methods=['POST'])
+@login_required
+def edit_section(section_id):
+    section = Section.query.get_or_404(section_id)
+    if section.course.lecturer_id != current_user.id: return "Từ chối truy cập", 403
+    new_name = request.form.get('name')
+    if new_name:
+        section.title = new_name
+        db.session.commit()
+        flash("Đã đổi tên chương!", "success")
+    return redirect(url_for('manage_course', course_id=section.course_id))
+
+
+@app.route('/lecturer/course/<int:course_id>/submit', methods=['POST'])
+@login_required
+def submit_course(course_id):
+    course = Course.query.get_or_404(course_id)
+    if course.lecturer_id != current_user.id:
+        flash("Bạn không có quyền thực hiện thao tác này.", "danger")
+        return redirect(url_for('lecturer_dashboard'))
+    has_content = any(section.lessons for section in course.sections)
+    if not has_content:
+        flash("Khóa học phải có ít nhất một chương và bài học trước khi gửi duyệt!", "warning")
+        return redirect(url_for('manage_course', course_id=course.id))
+    try:
+        course.status = CourseStatus.PENDING
+        db.session.commit()
+        flash(f"Khóa học '{course.title}' đã được gửi duyệt!", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Lỗi hệ thống: {str(e)}", "danger")
+    return redirect(url_for('lecturer_dashboard'))
+
+
+# ==========================
+# STATISTICS & API
+# ==========================
 
 @app.route('/lecturer/statistics')
 @login_required
@@ -429,36 +536,21 @@ def add_comment_api(lesson_id):
     content = request.form.get('content')
     parent_id = request.form.get('parent_id')
     file = request.files.get('image')
-
-    # Gọi hàm upload của ông từ utils
     image_url = utils.upload_to_cloudinary(file) if file else None
 
     if content or image_url:
         try:
-            c = utils.add_comment(content=content,
-                                  lesson_id=lesson_id,
-                                  user_id=current_user.id,
-                                  image=image_url,
-                                  parent_id=parent_id)
+            c = utils.add_comment(content=content, lesson_id=lesson_id, user_id=current_user.id,
+                                  image=image_url, parent_id=parent_id)
             return jsonify({
-                "id": c.id,
-                "content": c.content,
-                "image": c.image,
+                "id": c.id, "content": c.content, "image": c.image,
                 "created_date": c.created_date.strftime('%H:%M %d/%m'),
-                "user": {
-                    "full_name": f"{current_user.last_name} {current_user.first_name}",
-                    "avatar": current_user.avatar
-                }
+                "user": {"full_name": f"{current_user.last_name} {current_user.first_name}", "avatar": current_user.avatar}
             }), 201
         except Exception as e:
-            print(f"Lỗi DB: {e}")
             return jsonify({"error": "Lỗi lưu bình luận"}), 500
+    return jsonify({"error": "Nội dung không được trống"}), 400
 
-    return jsonify({"error": "Nội dung hoặc ảnh không được trống"}), 400
-
-# ==========================
-# RUN APP
-# ==========================
 
 if __name__ == '__main__':
     app.run(debug=True)
