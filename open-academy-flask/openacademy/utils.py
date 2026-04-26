@@ -3,7 +3,7 @@ import hashlib
 import hmac
 import urllib.parse
 from sqlalchemy.orm import joinedload
-
+from sqlalchemy import or_, and_
 from openacademy.models import Progress
 
 from flask_login import current_user
@@ -450,14 +450,26 @@ def stats_revenue(kw=None, from_date=None, to_date=None):
 
     return query.group_by(Course.id).all()
 
+def get_recommended_courses(user_id, limit=4):
+    # 1. Lấy thông tin trình độ và mục tiêu của Student
+    student = Student.query.get(user_id)
+    if not student:
+        return []
 
+    # 2. Lấy ID các khóa học User đã mua để loại trừ
+    enrolled_ids = [e.course_id for e in student.enrollments]
 
-def add_comment(content, lesson_id, user_id, image=None, parent_id=None):
-    c = Comment(content=content,
-                lesson_id=lesson_id,
-                user_id=user_id,
-                image=image,
-                parent_id=parent_id)
-    db.session.add(c)
-    db.session.commit()
-    return c
+    # 3. Truy vấn gợi ý
+    recommended = Course.query.filter(
+        Course.status == CourseStatus.ACTIVE,
+        Course.id.notin_(enrolled_ids) # Không gợi lại khóa đã mua
+    ).filter(
+        or_(
+            # Ưu tiên 1: Khớp cả mục tiêu và trình độ
+            and_(Course.goal == student.goal, Course.level == student.level),
+            # Ưu tiên 2: Khớp mục tiêu, trình độ có thể cao hơn 1 chút
+            Course.goal == student.goal
+        )
+    ).limit(limit).all()
+
+    return recommended

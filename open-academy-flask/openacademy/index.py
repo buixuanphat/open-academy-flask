@@ -239,19 +239,38 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-
 # ==========================
 # COURSE & LEARNING
 # ==========================
-
-@app.route('/courses')
+@app.route('/courses', methods=['GET'])
 def load_courses():
-    courses = utils.load_courses(
-        request.args.get('kw'), request.args.get('category_id'),
-        request.args.get('lecturer_id'), request.args.get('goal'), request.args.get('level')
-    )
-    return render_template('courses.html', courses=courses, categories=utils.load_categories(),
-                           lecturers=utils.load_lecturers(), goals=models.StudyGoal, levels=models.StudentLevel)
+    # 1. Lấy tham số tìm kiếm từ URL
+    kw = request.args.get('kw')
+    category_id = request.args.get('category_id')
+    lecturer_id = request.args.get('lecturer_id')
+    goal = request.args.get('goal')
+    level = request.args.get('level')
+
+    # 2. Load danh sách khóa học theo bộ lọc
+    courses = utils.load_courses(kw, category_id, lecturer_id, goal, level)
+    categories = utils.load_categories()
+    lecturers = utils.load_lecturers()
+
+    # 3. Logic gợi ý thông minh
+    recommended_courses = []
+    # Chỉ gợi ý cho Student đã đăng nhập và khi không có tham số tìm kiếm nào
+    if current_user.is_authenticated and current_user.role == UserRole.STUDENT:
+        if not any([kw, category_id, lecturer_id, goal, level]):
+            recommended_courses = utils.get_recommended_courses(user_id=current_user.id)
+
+    return render_template('courses.html',
+                           courses=courses,
+                           recommended=recommended_courses,
+                           categories=categories,
+                           lecturers=lecturers,
+                           goals=models.StudyGoal,
+                           levels=models.StudentLevel)
+
 
 
 @app.route('/courses/<int:course_id>')
@@ -400,8 +419,104 @@ def add_lesson():
     try:
         utils.add_lesson_to_section(request.form, request.files.get('video'))
     except Exception as e:
-        flash(str(e), "danger")
-    return redirect(url_for('manage_course', course_id=request.form.get('course_id')))
+        db.session.rollback()
+        flash(f"Lỗi: {str(e)}", "danger")
+
+    return redirect(url_for('manage_course', course_id=course_id))
+
+
+@app.route('/lecturer/lesson/<int:lesson_id>/delete', methods=['POST'])
+@login_required
+def delete_lesson(lesson_id):
+    lesson = Lesson.query.get_or_404(lesson_id)
+    course_id = lesson.section.course_id
+
+    if lesson.section.course.lecturer_id != current_user.id:
+        return "Từ chối truy cập", 403
+
+    db.session.delete(lesson)
+    db.session.commit()
+    flash("Đã xóa bài học!", "success")
+    return redirect(url_for('manage_course', course_id=course_id))
+
+
+@app.route('/lecturer/lesson/<int:lesson_id>/edit', methods=['POST'])  # Chỉ cần POST vì ta dùng Modal
+@login_required
+def edit_lesson(lesson_id):
+    lesson = Lesson.query.get_or_404(lesson_id)
+
+    # Kiểm tra quyền
+    if lesson.section.course.lecturer_id != current_user.id:
+        return "Từ chối truy cập", 403
+
+    # Cập nhật
+    lesson.title = request.form.get('title')
+    lesson.content = request.form.get('content')
+
+    video_file = request.files.get('video')
+    if video_file:
+        # Sử dụng hàm upload bạn đã viết trong utils
+        video_url = utils.upload_to_cloudinary(video_file, folder="e_course/lessons", resource_type="video")
+        if video_url:
+            lesson.video = video_url
+
+    db.session.commit()
+    flash("Cập nhật thành công!", "success")
+    return redirect(url_for('manage_course', course_id=lesson.section.course_id))
+
+
+@app.route('/lecturer/section/<int:section_id>/edit', methods=['POST'])
+@login_required
+def edit_section(section_id):
+    section = Section.query.get_or_404(section_id)
+
+    if section.course.lecturer_id != current_user.id:
+        return "Từ chối truy cập", 403
+
+    new_name = request.form.get('name')
+    if new_name:
+        section.title = new_name
+        db.session.commit()
+        flash("Đã đổi tên chương!", "success")
+
+    return redirect(url_for('manage_course', course_id=section.course_id))
+
+@app.route('/lecturer/course/<int:course_id>/submit', methods=['POST'])
+@login_required
+def submit_course(course_id):
+    course = Course.query.get_or_404(course_id)
+
+    # 1. Kiểm tra quyền sở hữu
+    if course.lecturer_id != current_user.id:
+        flash("Bạn không có quyền thực hiện thao tác này.", "danger")
+        return redirect(url_for('lecturer_dashboard'))
+
+    # 2. Kiểm tra điều kiện nội dung (Phải có ít nhất 1 chương và 1 bài học)
+    has_content = False
+    if course.sections:
+        for section in course.sections:
+            if section.lessons:
+                has_content = True
+                break
+
+    if not has_content:
+        flash("Khóa học phải có ít nhất một chương và bài học trước khi gửi duyệt!", "warning")
+        return redirect(url_for('manage_course', course_id=course.id))
+
+    # 3. Chuyển trạng thái sang PENDING (Chờ duyệt)
+    try:
+        course.status = CourseStatus.PENDING # Hoặc 'pending' tùy theo Enum của bạn
+        db.session.commit()
+        flash(f"Khóa học '{course.title}' đã được gửi duyệt thành công!", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Lỗi hệ thống: {str(e)}", "danger")
+
+    return redirect(url_for('lecturer_dashboard'))
+
+
+from sqlalchemy import func
+from flask import render_template, current_app
 
 
 @app.route('/lecturer/statistics')
