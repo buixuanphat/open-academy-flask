@@ -6,6 +6,8 @@ from sqlalchemy.orm import joinedload
 
 from openacademy.models import Progress
 
+from openacademy.models import Progress, Student, Course, Enrollment, Section, StudentLevel
+
 
 def add_lecturer(last_name, first_name, email, password, avatar, bio, degrees):
     password= str(hashlib.md5(password.encode('utf-8')).hexdigest())
