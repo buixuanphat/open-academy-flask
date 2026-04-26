@@ -29,6 +29,11 @@ GOOGLE_SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
     "openid"
 ]
+
+with app.app_context():
+    db.create_all()
+    print(">>> Hệ thống: Đã kiểm tra và tạo bảng thành công trên TiDB!")
+
 # Đăng nhập, đăng ký
 
 
