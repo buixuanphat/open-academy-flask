@@ -10,43 +10,54 @@ from flask_login import current_user
 from sqlalchemy import func
 import cloudinary.uploader
 
+import hashlib
+import uuid
+
 def add_lecturer(last_name, first_name, email, password, avatar, bio, degrees):
-    password= str(hashlib.md5(password.encode('utf-8')).hexdigest())
+    if password:
+        password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
+    else:
+        password = str(hashlib.md5(str(uuid.uuid4()).encode('utf-8')).hexdigest())
+
     new_lecturer = Lecturer(
-        last_name=last_name.strip(),
-        first_name=first_name.strip(),
+        last_name=last_name.strip() if last_name else "",
+        first_name=first_name.strip() if first_name else "",
         email=email.strip().lower(),
         password=password,
         avatar=avatar,
         role=UserRole.LECTURER,
         active=True,
-        bio=bio.strip(),
+        bio=bio.strip() if bio else "",
         status=Status.PENDING
     )
 
-    for degree in degrees:
-        new_degree = Degree(
-            name=degree['name'],
-            url=degree['url'],
-        )
-        new_lecturer.degrees.append(new_degree)
+    if degrees:
+        for degree in degrees:
+            new_degree = Degree(
+                name=degree['name'],
+                url=degree['url'],
+            )
+            new_lecturer.degrees.append(new_degree)
 
     try:
         db.session.add(new_lecturer)
         db.session.commit()
         return new_lecturer
-
     except Exception as e:
         db.session.rollback()
-        print(f"Lỗi hệ thống: {e}")
+        print(f"Lỗi hệ thống (add_lecturer): {e}")
         return None
 
 
 def add_student(last_name, first_name, email, password, avatar, goal, level):
-    password= str(hashlib.md5(password.encode('utf-8')).hexdigest())
+    if password:
+        password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
+    else:
+        password = str(hashlib.md5(str(uuid.uuid4()).encode('utf-8')).hexdigest())
+
     new_student = Student(
-        last_name=last_name.strip(),
-        first_name=first_name.strip(),
+        last_name=last_name.strip() if last_name else "",
+        first_name=first_name.strip() if first_name else "",
         email=email.strip().lower(),
         password=password,
         avatar=avatar,
@@ -60,10 +71,9 @@ def add_student(last_name, first_name, email, password, avatar, goal, level):
         db.session.add(new_student)
         db.session.commit()
         return new_student
-
     except Exception as e:
         db.session.rollback()
-        print(f"Lỗi hệ thống: {e}")
+        print(f"Lỗi hệ thống (add_student): {e}")
         return None
 
 
@@ -76,6 +86,10 @@ def check_login(email, password):
 
 def get_user_by_id(user_id):
     return User.query.get(user_id)
+
+
+def get_user_by_email(email):
+    return User.query.filter_by(email=email).first()
 
 
 def load_categories():
@@ -124,17 +138,48 @@ def load_progress(student_id, lesson_id):
     return 0
 
 
-def update_progress(student_id, lesson_id, percent):
+def update_progress(student_id, lesson_id, percent, is_completed):
+    # 1. Cập nhật hoặc tạo mới tiến độ bài học
     progress = Progress.query.filter_by(student_id=student_id, lesson_id=lesson_id).first()
 
-    if progress:
-        if percent > progress.percent:
-            progress.percent = percent
+    if not progress:
+        progress = Progress(student_id=student_id, lesson_id=lesson_id, percent=percent, is_completed=is_completed)
+        db.session.add(progress)
     else:
-        new_progress = Progress(student_id=student_id, lesson_id=lesson_id, percent=percent)
-        db.session.add(new_progress)
+        progress.percent = max(progress.percent, percent)
+        # Nếu đã từng hoàn thành thì giữ True, nếu chưa thì cập nhật theo data mới
+        if not progress.is_completed:
+            progress.is_completed = is_completed
 
     db.session.commit()
+
+    # 2. Logic kiểm tra hoàn thành khóa học
+    course_finished = False
+    if is_completed:
+        # Lấy lesson hiện tại để tìm ra khóa học (Course)
+        current_lesson = Lesson.query.get(lesson_id)
+        course_id = current_lesson.section.course_id
+
+        # Lấy danh sách tất cả ID bài học của khóa học này
+        all_lesson_ids = db.session.query(Lesson.id).join(Section).filter(Section.course_id == course_id).all()
+        all_lesson_ids = [l[0] for l in all_lesson_ids]
+
+        # Đếm số bài học mà sinh viên này đã hoàn thành trong khóa học này
+        completed_count = Progress.query.filter(
+            Progress.student_id == student_id,
+            Progress.lesson_id.in_(all_lesson_ids),
+            Progress.is_completed == True
+        ).count()
+
+        # Nếu số bài đã học xong == tổng số bài của khóa học
+        if completed_count == len(all_lesson_ids):
+            enrollment = Enrollment.query.filter_by(student_id=student_id, course_id=course_id).first()
+            if enrollment and not enrollment.finish:
+                enrollment.finish = True
+                course_finished = True
+                db.session.commit()
+
+    return course_finished
 
 
 def calculate_course_progress(student_id, course_id):

@@ -2,140 +2,347 @@
 {% block title %} Đang học: {{ current_lesson.title }} {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 bg-light">
-    <div class="d-flex justify-content-between align-items-center mb-4 px-3">
-        <div>
-            <h4 class="fw-bold mb-0 text-primary">{{ course.title }}</h4>
-            <p class="text-muted small mb-0">Giảng viên: {{ course.lecturer.last_name }} {{ course.lecturer.first_name }}</p>
-        </div>
-        <div style="width: 400px;">
-            <div class="d-flex justify-content-between mb-1">
-                <span class="small fw-medium">Tiến độ khóa học</span>
-                <span class="small fw-bold text-success">{{ progress[2] }}%, đã hoàn thành {{ progress[1] }}/{{ progress[0] }}</span>
+    <div class="container-fluid py-4 bg-light">
+        <div class="d-flex justify-content-between align-items-center mb-4 px-3">
+            <div>
+                <h4 class="fw-bold mb-0 text-primary">{{ course.title }}</h4>
+                <p class="text-muted small mb-0">Giảng
+                    viên: {{ course.lecturer.last_name }} {{ course.lecturer.first_name }}</p>
             </div>
-            <div class="progress" style="height: 10px; border-radius: 20px;">
-                <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
-                     style="width: {{progress[2]}}%">
+            <div style="width: 400px;">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="small fw-medium">Tiến độ khóa học</span>
+                    <span id="course-progress-text" class="small fw-bold text-success">{{ progress[2] }}%</span>
+                </div>
+                <div class="progress" style="height: 10px; border-radius: 20px;">
+                    <div id="course-progress-bar"
+                         class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                         style="width: {{ progress[2] }}%">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                    <div class="ratio ratio-16x9 bg-dark">
+                        <div id="video-container"
+                             data-student-id="{{ current_user.id }}"
+                             data-lesson-id="{{ current_lesson.id }}"
+                             data-percent="{{ percent | default(0) }}">
+
+                            <video id="lessonVideo" controls class="w-100 h-100" src="{{ current_lesson.video }}">
+                                Trình duyệt không hỗ trợ.
+                            </video>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <h3 class="fw-bold text-dark">{{ current_lesson.title }}</h3>
+                        <div class="lesson-description mt-4">
+                            <h4 class="fw-bold mb-3"><i class="fa-regular fa-file-lines me-2 text-primary"></i> Nội dung
+                                bài học</h4>
+                            <div class="text-secondary leading-relaxed">
+                                {{ current_lesson.content | safe }}
+                            </div>
+                        </div>
+
+                        <div class="comment-section mt-5 border-top pt-4">
+                            <h4 class="fw-bold mb-4">Thảo luận</h4>
+
+                            <div class="d-flex mb-4">
+                                <img src="{{ current_user.avatar or 'https://via.placeholder.com/50' }}"
+                                     class="rounded-circle me-2 border" width="40" height="40"
+                                     style="object-fit: cover;">
+                                <div class="flex-grow-1">
+                                    <div class="position-relative">
+                                        <textarea id="comment-content" class="form-control fb-input p-3" rows="1"
+                                                  placeholder="Viết bình luận..."
+                                                  oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
+                                        <div class="fb-actions">
+                                            <label for="image-upload" class="cursor-pointer text-muted me-2"><i
+                                                    class="fa-solid fa-camera fs-5"></i></label>
+                                            <input type="file" id="image-upload" hidden accept="image/*"
+                                                   onchange="previewImage(this, 'main')">
+                                            <button class="btn-send-fb" id="btn-main"
+                                                    onclick="sendComment(lessonIdGlobal)">
+                                                <i class="fa-solid fa-paper-plane"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="preview-main" class="mt-2 position-relative d-none"
+                                         style="width: fit-content;">
+                                        <img src="" class="rounded-3 border" style="max-height: 120px;">
+                                        <span class="btn-remove-preview" onclick="removePreview('main')">×</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="comment-list">
+                                {% for c in current_lesson.comments | reverse %}
+                                    {% if not c.parent_id %}
+                                        <div class="d-flex mb-3" id="comment-{{ c.id }}">
+                                            <img src="{{ c.user.avatar or 'https://via.placeholder.com/50' }}"
+                                                 class="rounded-circle me-2 border" width="40" height="40"
+                                                 style="object-fit: cover;">
+                                            <div class="flex-grow-1">
+                                                <div class="fb-bubble p-2 px-3">
+                                                    <h6 class="mb-0 fw-bold small text-primary">{{ c.user.last_name }} {{ c.user.first_name }}</h6>
+                                                    <p class="mb-1 text-dark">{{ c.content }}</p>
+                                                    {% if c.image %}<img src="{{ c.image }}" class="img-comment"
+                                                                         onclick="window.open(this.src)">{% endif %}
+                                                </div>
+                                                <div class="ms-2 mt-1">
+                                                    <small class="text-muted fw-bold me-3 cursor-pointer"
+                                                           onclick="showReplyForm({{ c.id }})">Phản hồi</small>
+                                                    <small class="text-muted tiny">{{ c.created_date.strftime('%H:%M %d/%m') }}</small>
+                                                </div>
+
+                                                <div id="replies-{{ c.id }}">
+                                                    {% for reply in c.replies %}
+                                                        <div class="d-flex mt-2 ms-1">
+                                                            <img src="{{ reply.user.avatar or 'https://via.placeholder.com/50' }}"
+                                                                 class="rounded-circle me-2 border" width="32"
+                                                                 height="32" style="object-fit: cover;">
+                                                            <div class="flex-grow-1">
+                                                                <div class="fb-bubble p-2 px-3 bg-white border">
+                                                                    <h6 class="mb-0 fw-bold small text-primary">{{ reply.user.last_name }} {{ reply.user.first_name }}</h6>
+                                                                    <p class="mb-0 text-dark">{{ reply.content }}</p>
+                                                                    {% if reply.image %}<img src="{{ reply.image }}"
+                                                                                             class="img-comment reply-img"
+                                                                                             onclick="window.open(this.src)">{% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 20px;">
+                    <div class="card-header bg-primary text-white p-3 rounded-top-4 border-0">
+                        <h5 class="mb-0 fw-bold">Nội dung khóa học</h5>
+                        <small class="opacity-75">{{ course.sections|length }} chương học</small>
+                    </div>
+                    <div class="list-group list-group-flush scroll-sidebar" style="max-height: 75vh; overflow-y: auto;">
+                        {% for section in course.sections %}
+                            <div class="bg-light p-3 fw-bold small text-uppercase text-muted border-bottom">{{ section.title }}</div>
+                            {% for lesson in section.lessons %}
+                                <a href="{{ url_for('learning', course_id=course.id, lesson_id=lesson.id) }}"
+                                   class="list-group-item list-group-item-action p-3 d-flex align-items-start border-bottom
+                               {% if lesson.id == current_lesson.id %}active-lesson{% endif %}">
+                                    <div class="me-3 mt-1">
+                                        <i class="{% if lesson.id == current_lesson.id %}fa-solid fa-circle-play text-primary{% else %}fa-regular fa-circle-play text-muted opacity-50{% endif %} fs-5"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold small mb-1 {% if lesson.id == current_lesson.id %}text-primary{% endif %}">{{ lesson.title }}</div>
+                                        <div class="text-muted tiny"><i
+                                                class="fa-regular fa-clock me-1"></i> {{ lesson.duration }}</div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                <div class="ratio ratio-16x9 bg-dark">
-                    <div id="video-container"
-                         data-student-id="{{ current_user.id }}"
-                         data-lesson-id="{{ current_lesson.id }}"
-                         data-percent="{{ percent | default(0) }}">
+    <script>
+        const lessonIdGlobal = {{ current_lesson.id }};
 
-                        <video id="lessonVideo" controls class="w-100 h-100" src="{{ current_lesson.video }}">
-                            Trình duyệt không hỗ trợ.
-                        </video>
+        // Logic xem trước và xóa ảnh
+        function previewImage(input, type) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const container = document.getElementById(`preview-${type}`);
+                    container.querySelector('img').src = e.target.result;
+                    container.classList.remove('d-none');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removePreview(type) {
+            document.getElementById(type === 'main' ? 'image-upload' : `reply-image-${type}`).value = "";
+            document.getElementById(`preview-${type}`).classList.add('d-none');
+        }
+
+        // Gửi bình luận: XOAY XOAY + CHẶN SPAM
+        function sendComment(lessonId, parentId = null) {
+            const contentArea = document.getElementById(parentId ? `reply-content-${parentId}` : 'comment-content');
+            const fileInput = document.getElementById(parentId ? `reply-image-${parentId}` : 'image-upload');
+            const btn = parentId ? document.querySelector(`#reply-form-${parentId} .btn-send-fb`) : document.getElementById('btn-main');
+
+            if (!contentArea.value.trim() && !fileInput.files[0]) return;
+
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true; // Chặn bấm tiếp
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; // Xoay xoay
+
+            const formData = new FormData();
+            formData.append('content', contentArea.value);
+            if (parentId) formData.append('parent_id', parentId);
+            if (fileInput.files[0]) formData.append('image', fileInput.files[0]);
+
+            fetch(`/api/lessons/${lessonId}/comments`, {method: "POST", body: formData})
+                .then(res => res.json())
+                .then(data => {
+                    if (data.id) location.reload();
+                    else {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHTML;
+                    }
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                });
+        }
+
+        function showReplyForm(commentId) {
+            if (document.getElementById(`reply-form-${commentId}`)) return;
+            const html = `
+            <div class="mt-2 d-flex ms-1 animate-fadeIn" id="reply-form-${commentId}">
+                <img src="{{ current_user.avatar or 'https://via.placeholder.com/50' }}" class="rounded-circle me-2 border" width="32" height="32" style="object-fit: cover;">
+                <div class="flex-grow-1 position-relative">
+                    <textarea id="reply-content-${commentId}" class="form-control fb-input p-2 px-3" rows="1" placeholder="Phản hồi..."></textarea>
+                    <div class="fb-actions-small">
+                        <label for="reply-image-${commentId}" class="cursor-pointer text-muted me-2 small"><i class="fa-solid fa-camera"></i></label>
+                        <input type="file" id="reply-image-${commentId}" hidden accept="image/*" onchange="previewImage(this, '${commentId}')">
+                        <button class="btn-send-fb" onclick="sendComment(lessonIdGlobal, ${commentId})"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                    <div id="preview-${commentId}" class="mt-2 position-relative d-none" style="width: fit-content;">
+                        <img src="" class="rounded-3 border" style="max-height: 80px;">
+                        <span class="btn-remove-preview" onclick="removePreview('${commentId}')">×</span>
                     </div>
                 </div>
+            </div>`;
+            document.getElementById(`comment-${commentId}`).querySelector('.flex-grow-1').insertAdjacentHTML('beforeend', html);
+        }
+    </script>
 
-                <div class="card-body p-4">
-                    <h3 class="fw-bold text-dark">{{ current_lesson.title }}</h3>
+    <style>
+        .rounded-4 {
+            border-radius: 1rem !important;
+        }
 
-                    <div class="lesson-description mt-4">
-                        <h4 class="fw-bold mb-3"><i class="fa-regular fa-file-lines me-2 text-primary"></i> Nội dung bài học</h4>
-                        <div class="text-secondary leading-relaxed">
-                            {{ current_lesson.content | safe }}
-                        </div>
-                    </div>
+        .active-lesson {
+            background-color: #f0f7ff !important;
+            border-left: 5px solid #0d6efd !important;
+        }
 
-                    <div class="d-flex gap-3 mt-5">
-                        <button class="btn btn-outline-secondary btn-lg px-5 py-2 rounded-3 flex-grow-1">
-                            <i class="fa-regular fa-comments me-2"></i> Đặt câu hỏi
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        .tiny {
+            font-size: 0.7rem;
+        }
 
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 20px;">
-                <div class="card-header bg-primary text-white p-3 rounded-top-4 border-0">
-                    <h5 class="mb-0 fw-bold">Nội dung khóa học</h5>
-                    <small class="opacity-75">{{ course.sections|length }} chương học</small>
-                </div>
-                <div class="list-group list-group-flush scroll-sidebar" style="max-height: 75vh; overflow-y: auto;">
-                    {% for section in course.sections %}
-                    <div class="bg-light p-3 fw-bold small text-uppercase text-muted border-bottom">
-                        {{ section.title }}
-                    </div>
+        .leading-relaxed {
+            line-height: 1.6;
+        }
 
-                    {% for lesson in section.lessons %}
-                    <a href="{{ url_for('learning', course_id=course.id, lesson_id=lesson.id) }}"
-                       class="list-group-item list-group-item-action p-3 d-flex align-items-start border-bottom
-                           {% if lesson.id == current_lesson.id %}active-lesson{% endif %}">
+        .scroll-sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
 
-                        <div class="me-3 mt-1">
-                            {% if lesson.id == current_lesson.id %}
-                            <i class="fa-solid fa-circle-play text-primary fs-5"></i>
-                            {% else %}
-                            <i class="fa-regular fa-circle-play text-muted fs-5 opacity-50"></i>
-                            {% endif %}
-                        </div>
+        .scroll-sidebar::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 10px;
+        }
 
-                        <div class="flex-grow-1">
-                            <div class="fw-bold small mb-1 {% if lesson.id == current_lesson.id %}text-primary{% endif %}">
-                                {{ lesson.title }}
-                            </div>
-                            <div class="text-muted tiny">
-                                <i class="fa-regular fa-clock me-1"></i> {{ lesson.duration }}
-                            </div>
-                        </div>
-                    </a>
-                    {% endfor %}
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+        /* FACEBOOK COMMENT STYLE */
+        .fb-bubble {
+            background-color: #f0f2f5;
+            border-radius: 18px;
+            display: inline-block;
+            max-width: 100%;
+            word-wrap: break-word;
+        }
 
-<style>
-    .rounded-4 {
-        border-radius: 1rem !important;
-    }
+        .fb-input {
+            background-color: #f0f2f5;
+            border: none !important;
+            border-radius: 20px !important;
+            padding-right: 65px !important;
+            resize: none;
+            overflow: hidden;
+        }
 
-    .active-lesson {
-        background-color: #f0f7ff !important;
-        border-left: 5px solid #0d6efd !important;
-    }
+        .fb-actions, .fb-actions-small {
+            position: absolute;
+            bottom: 8px;
+            right: 15px;
+            display: flex;
+            align-items: center;
+        }
 
-    .tiny {
-        font-size: 0.7rem;
-    }
+        .img-comment {
+            border-radius: 12px;
+            margin-top: 6px;
+            display: block;
+            max-width: 300px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+        }
 
-    .leading-relaxed {
-        line-height: 1.6;
-    }
+        .reply-img {
+            max-width: 250px;
+        }
 
-    /* Scrollbar cho Sidebar */
-    .scroll-sidebar::-webkit-scrollbar {
-        width: 5px;
-    }
+        .btn-send-fb {
+            background: none;
+            border: none;
+            color: #0d6efd;
+            padding: 0;
+        }
 
-    .scroll-sidebar::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
+        .btn-send-fb:disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
 
-    .scroll-sidebar::-webkit-scrollbar-thumb {
-        background: #ccc;
-        border-radius: 10px;
-    }
+        .btn-remove-preview {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            cursor: pointer;
+        }
 
-    .scroll-sidebar::-webkit-scrollbar-thumb:hover {
-        background: #999;
-    }
+        .cursor-pointer {
+            cursor: pointer;
+        }
 
-    /* Màu Badge soft */
-    .bg-success-soft {
-        background-color: #e8f5e9;
-    }
-</style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fadeIn {
+            animation: fadeIn 0.2s ease;
+        }
+    </style>
 {% endblock %}

@@ -146,6 +146,7 @@ class Enrollment(BaseModel):
     course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
     total_payment = Column(Float, nullable=False)
     payment_status = Column(Boolean, default=False)
+    finish = Column(Boolean, default=False)
 
     __table_args__ = (UniqueConstraint('student_id', 'course_id', name='unique_student_course'),)
 
@@ -163,6 +164,7 @@ class Progress(BaseModel):
 class Comment(BaseModel):
     __tablename__ = 'comment'
     content = Column(String(500), nullable=False)
+    image = Column(String(200), nullable=False)
     lesson_id = Column(Integer, ForeignKey('lesson.id'), nullable=False)
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     parent_id = Column(Integer, ForeignKey('comment.id'))

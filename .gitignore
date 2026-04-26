@@ -14,3 +14,5 @@ instance/
 # Database (nếu bạn dùng SQLite)
 *.sqlite3
 *.db
+
+client_secret.json
