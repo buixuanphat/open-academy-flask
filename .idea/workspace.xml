@@ -5,13 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="658c6a8e-fb6e-4626-acc6-cbaa96737d26" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/open-academy-flask.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/open-academy-flask.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/open-academy-flask/openacademy/index.py" beforeDir="false" afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/index.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/open-academy-flask/openacademy/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/open-academy-flask/openacademy/static/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/static/js/main.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/open-academy-flask/openacademy/templates/learning.html" beforeDir="false" afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/templates/learning.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/open-academy-flask/openacademy/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/open-academy-flask/openacademy/static/css/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/static/css/styles.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/open-academy-flask/openacademy/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/open-academy-flask/openacademy/templates/base.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,32 +37,32 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "JavaScript Debug.index.html.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.index (1).executor": "Run",
-    "Python.index.executor": "Run",
-    "Python.models (1).executor": "Run",
-    "Python.models.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "SCRUM-44",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "D:/Open Academy/open-academy-flask/open-academy-flask/openacademy",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;JavaScript Debug.index.html.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.index (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.index.executor&quot;: &quot;Run&quot;,
+    &quot;Python.models (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.models.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;SCRUM-44&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Open Academy/open-academy-flask/open-academy-flask/openacademy&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\Open Academy\open-academy-flask\open-academy-flask\openacademy" />
@@ -244,7 +240,9 @@
       <workItem from="1776883479430" duration="3519000" />
       <workItem from="1777038309933" duration="303000" />
       <workItem from="1777038629502" duration="8263000" />
-      <workItem from="1777090672785" duration="5662000" />
+      <workItem from="1777090672785" duration="11348000" />
+      <workItem from="1777174058717" duration="1300000" />
+      <workItem from="1777212176808" duration="2035000" />
     </task>
     <servers />
   </component>
