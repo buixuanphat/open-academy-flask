@@ -6,7 +6,7 @@ import urllib.parse
 import uuid
 from datetime import datetime
 from sqlalchemy.orm import joinedload
-from sqlalchemy import or_, and_, func
+from sqlalchemy import or_, and_, func, desc
 from flask_login import current_user
 import cloudinary.uploader
 
@@ -364,8 +364,8 @@ def stats_revenue(kw=None, from_date=None, to_date=None):
     return query.group_by(Course.id).all()
 
 
-def add_comment(content, lesson_id, user_id, image=None, parent_id=None):
-    c = Comment(content=content, lesson_id=lesson_id, user_id=user_id, image=image, parent_id=parent_id)
+def add_comment(content, lesson_id, user_id, image=None, parent_id=None, is_lecturer=False):
+    c = Comment(content=content, lesson_id=lesson_id, user_id=user_id, image=image, parent_id=parent_id, is_lecturer=is_lecturer)
     db.session.add(c)
     db.session.commit()
     return c
@@ -386,3 +386,13 @@ def get_recommended_courses(user_id, limit=4):
         )
     ).limit(limit).all()
     return recommended
+
+
+def get_lecturer_comments(lecturer_id):
+    return db.session.query(Comment)\
+        .join(Lesson, Comment.lesson_id == Lesson.id)\
+        .join(Section, Lesson.section_id == Section.id)\
+        .join(Course, Section.course_id == Course.id)\
+        .filter(Course.lecturer_id == lecturer_id)\
+        .order_by(desc(Comment.created_date))\
+        .all()

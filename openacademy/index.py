@@ -1,26 +1,44 @@
+import os
 import secrets
 import hashlib
 import base64
 from datetime import datetime
-
+import json
+from dotenv import load_dotenv
 from flask import render_template, request, redirect, url_for, flash, session, abort, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport import requests as google_requests
 import cloudinary.uploader
-from sqlalchemy import func
-
-from openacademy import app, utils, models, login, db, VNPAY_TMN_CODE, VNPAY_RETURN_URL, VNPAY_PAYMENT_URL, \
-    VNPAY_HASH_SECRET, GOOGLE_CLIENT_ID, CLIENT_SECRETS_FILE
-from openacademy.models import UserRole, Course, Lesson, Category, StudyGoal, StudentLevel, CourseStatus, Section, \
-    Enrollment
+from openacademy import app, utils, models, login, db, VNPAY_TMN_CODE, VNPAY_RETURN_URL, VNPAY_PAYMENT_URL, VNPAY_HASH_SECRET
+from openacademy.models import UserRole, Course, Lesson, Category, StudyGoal, StudentLevel, CourseStatus, Section, Enrollment
 from openacademy.utils import add_lecturer, add_student, vnpay
 
+# Tải biến môi trường từ .env
+load_dotenv()
 
-# ==========================
-# AUTHENTICATION & GOOGLE OAUTH
-# ==========================
+# Lấy cấu hình Google từ biến môi trường
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID') # Thêm dòng này để callback không bị lỗi
+client_secret_env = os.getenv('GOOGLE_CLIENT_SECRET_JSON')
+client_config = json.loads(client_secret_env) if client_secret_env else None
+
+# SCOPES dùng chung
+GOOGLE_SCOPES = [
+    "https://www.googleapis.com/auth/userinfo.profile",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "openid"
+]
+# Đăng nhập, đăng ký
+
+
+@app.route('/')
+def home():
+    if current_user.is_authenticated:
+        if current_user.role == UserRole.LECTURER:
+            return redirect(url_for('lecturer_dashboard'))
+        return redirect(url_for('load_courses'))
+    return render_template('login.html')
 
 @login.user_loader
 def user_load(user_id):
@@ -30,10 +48,12 @@ def user_load(user_id):
 @app.route('/login-google')
 @app.route('/login-google/<role>')
 def login_google(role='STUDENT'):
-    local_flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE,
-        scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email",
-                "openid"],
+    if not client_config:
+        return "Lỗi: Chưa cấu hình GOOGLE_CLIENT_SECRET_JSON trong .env"
+
+    local_flow = Flow.from_client_config(
+        client_config,
+        scopes=GOOGLE_SCOPES,
         redirect_uri="http://127.0.0.1:5000/callback"
     )
 
@@ -60,10 +80,12 @@ def callback():
     role = session.get('register_role')
     cv = session.get('code_verifier')
 
-    local_flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE,
-        scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email",
-                "openid"],
+    if not client_config or not GOOGLE_CLIENT_ID:
+        return "Lỗi cấu hình hệ thống: Thiếu GOOGLE_CLIENT_ID trong .env"
+
+    local_flow = Flow.from_client_config(
+        client_config,
+        scopes=GOOGLE_SCOPES,
         state=state,
         redirect_uri="http://127.0.0.1:5000/callback"
     )
@@ -103,9 +125,6 @@ def callback():
         return f"Lỗi xác thực Google: {str(e)}"
 
 
-# ==========================
-# USER REGISTRATION
-# ==========================
 
 @app.route('/lecturer-register', methods=['GET', 'POST'])
 def lecturer_register():
@@ -127,8 +146,7 @@ def lecturer_register():
                 avatar_file = request.files.get('avatar')
                 avatar_url = google_data['avatar'] if google_data else None
                 if avatar_file:
-                    res_avatar = cloudinary.uploader.upload(avatar_file)
-                    avatar_url = res_avatar.get('secure_url')
+                    avatar_url = utils.upload_to_cloudinary(avatar_file)
 
                 degree_files = request.files.getlist('degree_files[]')
                 degree_names = request.form.getlist('degree_names[]')
@@ -137,11 +155,12 @@ def lecturer_register():
                 for i in range(len(degree_files)):
                     file = degree_files[i]
                     if file and file.filename != '':
-                        res_degree = cloudinary.uploader.upload(file)
+                        res_url = utils.upload_to_cloudinary(file)
                         name_val = degree_names[i].strip() if i < len(degree_names) else file.filename
-                        degrees_data.append({'name': name_val or file.filename, 'url': res_degree.get('secure_url')})
+                        degrees_data.append({'name': name_val or file.filename, 'url': res_url})
 
-                new_lecturer = add_lecturer(
+                # SỬA LỖI: Thêm utils. trước add_lecturer
+                new_lecturer = utils.add_lecturer(
                     last_name=last_name, first_name=first_name, email=email,
                     password=password if not google_data else None,
                     avatar=avatar_url, bio=bio, degrees=degrees_data
@@ -177,10 +196,10 @@ def student_register():
                 avatar_file = request.files.get('avatar')
                 avatar_url = google_data['avatar'] if google_data else None
                 if avatar_file:
-                    res_avatar = cloudinary.uploader.upload(avatar_file)
-                    avatar_url = res_avatar.get('secure_url')
+                    avatar_url = utils.upload_to_cloudinary(avatar_file)
 
-                new_student = add_student(
+                # SỬA LỖI: Thêm utils. trước add_student
+                new_student = utils.add_student(
                     last_name=last_name, first_name=first_name, email=email,
                     password=password if not google_data else None,
                     avatar=avatar_url, goal=goal, level=level
@@ -196,17 +215,6 @@ def student_register():
                            google_data=google_data)
 
 
-# ==========================
-# GENERAL ROUTES
-# ==========================
-
-@app.route('/')
-def home():
-    if current_user.is_authenticated:
-        if current_user.role == UserRole.LECTURER:
-            return redirect(url_for('lecturer_dashboard'))
-        return redirect(url_for('load_courses'))
-    return render_template('login.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -236,9 +244,9 @@ def logout():
     return redirect(url_for('login'))
 
 
-# ==========================
-# COURSE & LEARNING
-# ==========================
+
+
+# Học tập
 
 @app.route('/courses')
 def load_courses():
@@ -249,8 +257,6 @@ def load_courses():
     level = request.args.get('level')
 
     courses = utils.load_courses(kw, category_id, lecturer_id, goal, level)
-    print(courses)
-    print("aaaaaaaaa")
     categories = utils.load_categories()
     lecturers = utils.load_lecturers()
 
@@ -323,45 +329,59 @@ def enroll_free(course_id):
     return redirect(url_for('course_detail', course_id=course_id))
 
 
-# ==========================
-# PAYMENT (VNPAY)
-# ==========================
+# Thanh toán
 
 @app.route('/payment', methods=['POST'])
 @login_required
 def payment():
     course_id = request.form.get('course_id')
     amount = int(float(request.form.get('amount'))) * 100
-    vnp = vnpay()
-    vnp.request_data.update({
+    vnp_pay = vnpay()
+    vnp_pay.request_data.update({
         'vnp_Version': '2.1.0', 'vnp_Command': 'pay', 'vnp_TmnCode': VNPAY_TMN_CODE,
         'vnp_Amount': amount, 'vnp_CurrCode': 'VND', 'vnp_TxnRef': f"{course_id}-{datetime.now().strftime('%H%M%S')}",
         'vnp_OrderInfo': request.form.get('order_desc'), 'vnp_OrderType': 'billpayment',
         'vnp_Locale': 'vn', 'vnp_CreateDate': datetime.now().strftime('%Y%m%d%H%M%S'),
         'vnp_IpAddr': request.remote_addr, 'vnp_ReturnUrl': VNPAY_RETURN_URL
     })
-    return redirect(vnp.get_payment_url(VNPAY_PAYMENT_URL, VNPAY_HASH_SECRET))
+    return redirect(vnp_pay.get_payment_url(VNPAY_PAYMENT_URL, VNPAY_HASH_SECRET))
 
 
 @app.route('/payment_return')
 @login_required
 def payment_return():
-    vnp = vnpay()
-    vnp.response_data = request.args.to_dict()
-    if vnp.validate_response(VNPAY_HASH_SECRET) and vnp.response_data['vnp_ResponseCode'] == '00':
-        course_id = int(vnp.response_data['vnp_TxnRef'].split('-')[0])
+    vnp_pay = vnpay()
+    vnp_pay.response_data = request.args.to_dict()
+    if vnp_pay.validate_response(VNPAY_HASH_SECRET) and vnp_pay.response_data['vnp_ResponseCode'] == '00':
+        course_id = int(vnp_pay.response_data['vnp_TxnRef'].split('-')[0])
         if not Enrollment.query.filter_by(student_id=current_user.id, course_id=course_id).first():
             db.session.add(Enrollment(student_id=current_user.id, course_id=course_id,
-                                      total_payment=float(vnp.response_data['vnp_Amount']) / 100, payment_status=True))
+                                      total_payment=float(vnp_pay.response_data['vnp_Amount']) / 100, payment_status=True))
             db.session.commit()
             return "Đăng ký thành công!"
         return "Bạn đã đăng ký khóa học này rồi."
     return "Thanh toán thất bại."
 
 
-# ==========================
-# LECTURER DASHBOARD & MANAGEMENT
-# ==========================
+# Giảng viên
+
+
+@app.route('/admin/upload-image', methods=['POST'])
+def admin_upload_image():
+    file = request.files.get('upload')
+    if file:
+        url = utils.upload_to_cloudinary(file, folder="editor_uploads")
+        if url:
+            return jsonify({
+                "uploaded": 1,
+                "fileName": file.filename,
+                "url": url
+            })
+
+    return jsonify({
+        "uploaded": 0,
+        "error": {"message": "Không thể tải ảnh lên."}
+    })
 
 @app.route('/lecturer/dashboard')
 @login_required
@@ -387,7 +407,7 @@ def create_course():
     return render_template('lecturer/create_course.html', categories=Category.query.all(), goals=StudyGoal,
                            levels=StudentLevel)
 
-# --- HÀM XÓA KHÓA HỌC (FIX LỖI 500) ---
+
 @app.route('/lecturer/course/<int:course_id>/delete', methods=['POST'])
 @login_required
 def delete_course(course_id):
@@ -509,9 +529,6 @@ def submit_course(course_id):
     return redirect(url_for('lecturer_dashboard'))
 
 
-# ==========================
-# STATISTICS & API
-# ==========================
 
 @app.route('/lecturer/statistics')
 @login_required
@@ -539,11 +556,13 @@ def add_comment_api(lesson_id):
     parent_id = request.form.get('parent_id')
     file = request.files.get('image')
     image_url = utils.upload_to_cloudinary(file) if file else None
-
+    is_lecturer = False
+    if current_user.role == UserRole.LECTURER:
+        is_lecturer = True
     if content or image_url:
         try:
             c = utils.add_comment(content=content, lesson_id=lesson_id, user_id=current_user.id,
-                                  image=image_url, parent_id=parent_id)
+                                  image=image_url, parent_id=parent_id, is_lecturer=is_lecturer)
             return jsonify({
                 "id": c.id, "content": c.content, "image": c.image,
                 "created_date": c.created_date.strftime('%H:%M %d/%m'),
@@ -552,6 +571,13 @@ def add_comment_api(lesson_id):
         except Exception as e:
             return jsonify({"error": "Lỗi lưu bình luận"}), 500
     return jsonify({"error": "Nội dung không được trống"}), 400
+
+
+@app.route('/comments', methods=['GET'])
+@login_required
+def lesson_comments():
+    comments = utils.get_lecturer_comments(lecturer_id=current_user.id)
+    return render_template("lecturer/comment.html", comments=comments)
 
 
 if __name__ == '__main__':

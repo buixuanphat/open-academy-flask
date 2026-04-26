@@ -165,6 +165,7 @@ class Comment(BaseModel):
     __tablename__ = 'comment'
     content = Column(String(500), nullable=False)
     image = Column(String(200), nullable=False)
+    is_lecturer = Column(Boolean, default=False)
     lesson_id = Column(Integer, ForeignKey('lesson.id'), nullable=False)
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     parent_id = Column(Integer, ForeignKey('comment.id'))

@@ -4,6 +4,9 @@
 
 {% block content %}
 <style>
+    /* ẨN THÔNG BÁO UPDATE CỦA CKEDITOR (CÁI ĐỎ ĐỎ) */
+    .cke_notification_warning, .cke_notification_info { display: none !important; }
+
     /* Style cho breadcrumb và tiêu đề */
     .breadcrumb-item a { color: #6c757d; font-size: 14px; text-decoration: none; }
     .breadcrumb-item.active { color: #111; font-weight: 600; font-size: 14px; }
@@ -178,6 +181,7 @@
         </form>
     </div>
 </div>
+
 <div class="modal fade" id="addSectionModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <form action="{{ url_for('add_section', course_id=course.id) }}" method="POST" class="modal-content shadow-lg border-0 rounded-4">
@@ -199,10 +203,18 @@
         </form>
     </div>
 </div>
+
 <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
 <script>
-    var addEditor = CKEditor.replace('editor-add', { height: 350 });
-    var editEditor = CKEditor.replace('editor-edit', { height: 400 });
+    const config = {
+        height: 350,
+        filebrowserImageUploadUrl: '/admin/upload-image', 
+        removePlugins: 'elementspath',
+        resize_enabled: false
+    };
+
+    var addEditor = CKEDITOR.replace('editor-add', config);
+    var editEditor = CKEDITOR.replace('editor-edit', config);
 
     function openEditSectionModal(id, title) {
         const form = document.getElementById('editSectionForm');
@@ -217,7 +229,6 @@
 
         const form = document.getElementById('editLessonForm');
         form.action = window.location.origin + "/lecturer/lesson/" + id + "/edit";
-
         document.getElementById('edit_lesson_title').value = title;
 
         if (editEditor) {

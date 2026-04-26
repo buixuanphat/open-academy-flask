@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 1000px; color: #333;">
+    <div class="d-flex justify-content-between align-items-end mb-5">
+        <div>
+            <h2 class="fw-light mb-1">Thống kê doanh thu</h2>
+        </div>
+        <div class="text-end">
+            <span class="text-muted small text-uppercase">Tổng cộng</span>
+            <h3 class="fw-bold text-primary">{{ "{:,.0f}".format(total_rev) }} <small style="font-size: 0.6em;">VNĐ</small></h3>
+        </div>
+    </div>
+
+    <form method="GET" class="row g-2 mb-5">
+        <div class="col-md-5">
+            <input type="text" name="kw" placeholder="Tìm tên khóa học..." class="form-control form-control-sm border-0 bg-light px-3" />
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="from_date" class="form-control form-control-sm border-0 bg-light" title="Từ ngày" />
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="to_date" class="form-control form-control-sm border-0 bg-light" title="Đến ngày" />
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-dark btn-sm w-100 shadow-sm">Lọc dữ liệu</button>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-borderless align-middle">
+            <thead>
+                <tr class="text-muted small border-bottom">
+                    <th class="pb-3" style="width: 10%;">ID</th>
+                    <th class="pb-3" style="width: 45%;">KHÓA HỌC</th>
+                    <th class="pb-3" style="width: 25%;">DOANH THU</th>
+                    <th class="pb-3 text-end" style="width: 20%;">HỌC VIÊN</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in stats %}
+                <tr class="border-bottom-subtle">
+                    <td class="py-3 text-muted">#{{ s[0] }}</td>
+                    <td class="py-3 fw-medium">{{ s[1] }}</td>
+                    <td class="py-3">{{ "{:,.0f}".format(s[2]) }}</td>
+                    <td class="py-3 text-end">
+                        <span class="badge bg-light text-dark fw-normal border">{{ s[3] }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    body { background-color: #fafafa; }
+    .form-control:focus { background-color: #fff; box-shadow: 0 0 0 2px rgba(0,0,0,0.05); }
+    .border-bottom-subtle { border-bottom: 1px solid #f0f0f0; }
+    .table thead th { font-weight: 600; letter-spacing: 0.5px; }
+    .btn-dark { background-color: #222; border: none; transition: 0.3s; }
+    .btn-dark:hover { background-color: #000; transform: translateY(-1px); }
+</style>
+{% endblock %}

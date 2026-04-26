@@ -84,11 +84,17 @@
                                     {% if not c.parent_id %}
                                         <div class="d-flex mb-3" id="comment-{{ c.id }}">
                                             <img src="{{ c.user.avatar or 'https://via.placeholder.com/50' }}"
-                                                 class="rounded-circle me-2 border" width="40" height="40"
+                                                 class="rounded-circle me-2 border {% if c.is_lecturer %}border-primary border-2{% endif %}" width="40" height="40"
                                                  style="object-fit: cover;">
                                             <div class="flex-grow-1">
-                                                <div class="fb-bubble p-2 px-3">
-                                                    <h6 class="mb-0 fw-bold small text-primary">{{ c.user.last_name }} {{ c.user.first_name }}</h6>
+                                                <div class="fb-bubble p-2 px-3 {% if c.is_lecturer %}bg-lecturer{% endif %}">
+                                                    <h6 class="mb-0 fw-bold small text-primary d-flex align-items-center">
+                                                        {{ c.user.last_name }} {{ c.user.first_name }}
+                                                        {% if c.is_lecturer %}
+                                                            <i class="fa-solid fa-circle-check ms-1 text-primary shadow-sm" title="Giảng viên"></i>
+                                                            <span class="badge bg-primary ms-2" style="font-size: 8px; font-weight: normal;">GIẢNG VIÊN</span>
+                                                        {% endif %}
+                                                    </h6>
                                                     <p class="mb-1 text-dark">{{ c.content }}</p>
                                                     {% if c.image %}<img src="{{ c.image }}" class="img-comment"
                                                                          onclick="window.open(this.src)">{% endif %}
@@ -103,11 +109,16 @@
                                                     {% for reply in c.replies %}
                                                         <div class="d-flex mt-2 ms-1">
                                                             <img src="{{ reply.user.avatar or 'https://via.placeholder.com/50' }}"
-                                                                 class="rounded-circle me-2 border" width="32"
+                                                                 class="rounded-circle me-2 border {% if reply.is_lecturer %}border-primary border-2{% endif %}" width="32"
                                                                  height="32" style="object-fit: cover;">
                                                             <div class="flex-grow-1">
-                                                                <div class="fb-bubble p-2 px-3 bg-white border">
-                                                                    <h6 class="mb-0 fw-bold small text-primary">{{ reply.user.last_name }} {{ reply.user.first_name }}</h6>
+                                                                <div class="fb-bubble p-2 px-3 border {% if reply.is_lecturer %}bg-lecturer{% else %}bg-white{% endif %}">
+                                                                    <h6 class="mb-0 fw-bold small text-primary d-flex align-items-center">
+                                                                        {{ reply.user.last_name }} {{ reply.user.first_name }}
+                                                                        {% if reply.is_lecturer %}
+                                                                            <i class="fa-solid fa-circle-check ms-1 text-primary shadow-sm" title="Giảng viên"></i>
+                                                                        {% endif %}
+                                                                    </h6>
                                                                     <p class="mb-0 text-dark">{{ reply.content }}</p>
                                                                     {% if reply.image %}<img src="{{ reply.image }}"
                                                                                              class="img-comment reply-img"
@@ -266,6 +277,12 @@
             display: inline-block;
             max-width: 100%;
             word-wrap: break-word;
+        }
+
+        /* Màu nền riêng cho comment của Giảng viên */
+        .bg-lecturer {
+            background-color: #e7f3ff !important;
+            border: 1px solid #cce4ff !important;
         }
 
         .fb-input {

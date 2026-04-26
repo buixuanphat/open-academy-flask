@@ -1,10 +1,8 @@
-import os
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import cloudinary
 from flask_login import LoginManager
-from google_auth_oauthlib.flow import Flow
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'jbcvlgerljblgviyfihuewlfjsdv'
@@ -37,11 +35,4 @@ CLIENT_SECRETS_FILE = os.path.join(BASE_DIR, "client_secret.json")
 
 GOOGLE_CLIENT_ID = "466909840388-7d6tnnjremfnadn2dk5s91drjcq428n8.apps.googleusercontent.com"
 
-flow = Flow.from_client_secrets_file(
-    client_secrets_file=CLIENT_SECRETS_FILE,
-    scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "openid"],
-    redirect_uri="http://127.0.0.1:5000/callback"
-)
-
-# Cho phép chạy OAuth qua HTTP (chỉ dùng khi code ở local)
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"

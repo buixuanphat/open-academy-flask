@@ -2,7 +2,7 @@ from openacademy import app, db, utils
 from flask import request, redirect, url_for, flash
 from flask_admin import Admin, BaseView, expose, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
-from openacademy.models import Category, Course, User, UserRole, Enrollment, Status, Lecturer
+from openacademy.models import Category, Course, User, UserRole, Enrollment, Status, Lecturer, CourseStatus
 from flask_login import logout_user, current_user
 from wtforms import TextAreaField
 from wtforms.widgets import TextArea
@@ -17,7 +17,7 @@ class AuthenticatedModelView(ModelView):
 
     def inaccessible_callback(self, name, **kwargs):
         flash("Bạn cần quyền Admin để vào khu vực này!", "danger")
-        return redirect(url_for('auth.login'))  # Thay 'auth.login' bằng route login của bạn
+        return redirect(url_for('auth.login'))
 
 
 class AuthenticatedView(BaseView):
@@ -55,7 +55,10 @@ class CourseModelView(AuthenticatedModelView):
         'lecturer': 'Giảng viên'
     }
     # Tích hợp CKEditor cho mô tả khóa học
-    extra_js = ['//cdn.ckeditor.com/4.6.0/standard/ckeditor.js']
+    extra_js = [
+        'https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js',
+        '/static/js/admin_ckeditor_config.js'  
+    ]
     form_overrides = {'description': CKTextAreaField}
 
 
@@ -87,14 +90,13 @@ class StatsView(AuthenticatedView):
 class MyAdminIndexView(AdminIndexView):
     @expose('/')
     def index(self):
-        # Tận dụng hàm load_categories có sẵn trong utils.py của bạn
         categories = utils.load_categories()
 
-        # Thống kê nhanh cho Dashboard
         total_stats = {
             'users': User.query.count(),
             'courses': Course.query.count(),
-            'pending_lecturers': Lecturer.query.filter_by(status=Status.PENDING).count()
+            'pending_lecturers': Lecturer.query.filter_by(status=Status.PENDING).count(),
+            'pending_course': Course.query.filter_by(status=CourseStatus.PENDING).count()
         }
 
         return self.render('admin/index.html', categories=categories, stats=total_stats)
@@ -107,14 +109,16 @@ class LogoutView(AuthenticatedView):
         return redirect('/login')
 
 
-# ==========================================
-# 5. KHỞI TẠO HỆ THỐNG
-# ==========================================
-# Sửa lại dòng 114
-admin = Admin(app=app, name='EC-ADMIN PANEL', index_view=MyAdminIndexView())
+
+admin = Admin(app=app, name='OpenAcademy Administrator', index_view=MyAdminIndexView())
 
 admin.add_view(UserModelView(User, db.session, name='Người dùng'))
 admin.add_view(AuthenticatedModelView(Category, db.session, name='Danh mục'))
 admin.add_view(CourseModelView(Course, db.session, name='Khóa học'))
 admin.add_view(StatsView(name='Báo cáo doanh thu'))
 admin.add_view(LogoutView(name='Đăng xuất'))
+
+
+
+
+

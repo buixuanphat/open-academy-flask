@@ -1,4 +1,4 @@
-# Python
+
 __pycache__/
 *.py[cod]
 *$py.class
@@ -6,13 +6,14 @@ venv/
 env/
 .env
 
-# Flask
+
 instance/
 .pytest_cache/
 .DS_Store
 
-# Database (nếu bạn dùng SQLite)
+
 *.sqlite3
 *.db
 
-client_secret.json
+openacademy/client_secret.json
+

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Quản trị{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 1100px; color: #333;">
+    <header class="mb-5">
+        <h2 class="fw-light mb-1">Bảng điều khiển</h2>
+    </header>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="p-4 bg-white border-bottom border-dark border-4 shadow-sm rounded">
+                <div class="text-muted small text-uppercase fw-bold mb-2">Khóa học chờ duyệt</div>
+                <div class="h2 fw-bold mb-0">{{ stats.pending_course }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-4 bg-white border-bottom border-warning border-4 shadow-sm rounded">
+                <div class="text-muted small text-uppercase fw-bold mb-2">Giảng viên chờ duyệt</div>
+                <div class="h2 fw-bold mb-0">{{ stats.pending_lecturers }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="p-4 bg-white border rounded shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold m-0">Danh mục khóa học</h5>
+                    <span class="badge bg-light text-muted fw-normal border">Dữ liệu thực tế</span>
+                </div>
+                <div style="height: 350px; position: relative;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [{% for c in categories %}"{{ c.name }}",{% endfor %}],
+            datasets: [{
+                label: 'Số lượng khóa học',
+                data: [{% for c in categories %}{{ c.courses|length }},{% endfor %}],
+                backgroundColor: '#222', // Màu xám đen tối giản
+                borderRadius: 4, // Bo góc cột biểu đồ
+                barThickness: 30
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false } // Ẩn chú thích để sạch hơn
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { drawBorder: false, color: '#f0f0f0' },
+                    ticks: { color: '#999', font: { size: 11 } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#666', font: { size: 12 } }
+                }
+            }
+        }
+    });
+</script>
+
+<style>
+    body { background-color: #fafafa; }
+    .shadow-sm { box-shadow: 0 .125rem .25rem rgba(0,0,0,.04) !important; }
+    .border-bottom { border-width: 3px !important; }
+</style>
+{% endblock %}
