@@ -6,8 +6,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4 px-3">
             <div>
                 <h4 class="fw-bold mb-0 text-primary">{{ course.title }}</h4>
-                <p class="text-muted small mb-0">Giảng
-                    viên: {{ course.lecturer.last_name }} {{ course.lecturer.first_name }}</p>
+                <p class="text-muted small mb-0">Giảng viên: {{ course.lecturer.last_name }} {{ course.lecturer.first_name }}</p>
             </div>
             <div style="width: 400px;">
                 <div class="d-flex justify-content-between mb-1">
@@ -31,7 +30,6 @@
                              data-student-id="{{ current_user.id }}"
                              data-lesson-id="{{ current_lesson.id }}"
                              data-percent="{{ percent | default(0) }}">
-
                             <video id="lessonVideo" controls class="w-100 h-100" src="{{ current_lesson.video }}">
                                 Trình duyệt không hỗ trợ.
                             </video>
@@ -41,8 +39,7 @@
                     <div class="card-body p-4">
                         <h3 class="fw-bold text-dark">{{ current_lesson.title }}</h3>
                         <div class="lesson-description mt-4">
-                            <h4 class="fw-bold mb-3"><i class="fa-regular fa-file-lines me-2 text-primary"></i> Nội dung
-                                bài học</h4>
+                            <h4 class="fw-bold mb-3"><i class="fa-regular fa-file-lines me-2 text-primary"></i> Nội dung bài học</h4>
                             <div class="text-secondary leading-relaxed">
                                 {{ current_lesson.content | safe }}
                             </div>
@@ -156,8 +153,7 @@
                                     </div>
                                     <div class="flex-grow-1">
                                         <div class="fw-bold small mb-1 {% if lesson.id == current_lesson.id %}text-primary{% endif %}">{{ lesson.title }}</div>
-                                        <div class="text-muted tiny"><i
-                                                class="fa-regular fa-clock me-1"></i> {{ lesson.duration }}</div>
+                                        <div class="text-muted tiny"><i class="fa-regular fa-clock me-1"></i> {{ lesson.duration }}</div>
                                     </div>
                                 </a>
                             {% endfor %}
@@ -171,7 +167,6 @@
     <script>
         const lessonIdGlobal = {{ current_lesson.id }};
 
-        // Logic xem trước và xóa ảnh
         function previewImage(input, type) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
@@ -185,40 +180,51 @@
         }
 
         function removePreview(type) {
-            document.getElementById(type === 'main' ? 'image-upload' : `reply-image-${type}`).value = "";
+            const inputId = type === 'main' ? 'image-upload' : `reply-image-${type}`;
+            const input = document.getElementById(inputId);
+            if(input) input.value = "";
             document.getElementById(`preview-${type}`).classList.add('d-none');
         }
 
-        // Gửi bình luận: XOAY XOAY + CHẶN SPAM
         function sendComment(lessonId, parentId = null) {
             const contentArea = document.getElementById(parentId ? `reply-content-${parentId}` : 'comment-content');
             const fileInput = document.getElementById(parentId ? `reply-image-${parentId}` : 'image-upload');
             const btn = parentId ? document.querySelector(`#reply-form-${parentId} .btn-send-fb`) : document.getElementById('btn-main');
 
-            if (!contentArea.value.trim() && !fileInput.files[0]) return;
+            const contentValue = contentArea.value.trim();
+            const hasFile = fileInput && fileInput.files && fileInput.files[0];
+
+            // CHỈ CHẶN KHI CẢ HAI ĐỀU TRỐNG
+            if (!contentValue && !hasFile) return;
 
             const originalHTML = btn.innerHTML;
-            btn.disabled = true; // Chặn bấm tiếp
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; // Xoay xoay
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
             const formData = new FormData();
-            formData.append('content', contentArea.value);
+            formData.append('content', contentValue);
             if (parentId) formData.append('parent_id', parentId);
-            if (fileInput.files[0]) formData.append('image', fileInput.files[0]);
+            if (hasFile) formData.append('image', fileInput.files[0]);
 
-            fetch(`/api/lessons/${lessonId}/comments`, {method: "POST", body: formData})
-                .then(res => res.json())
-                .then(data => {
-                    if (data.id) location.reload();
-                    else {
-                        btn.disabled = false;
-                        btn.innerHTML = originalHTML;
-                    }
-                })
-                .catch(err => {
+            fetch(`/api/lessons/${lessonId}/comments`, {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.id) {
+                    location.reload();
+                } else {
                     btn.disabled = false;
                     btn.innerHTML = originalHTML;
-                });
+                    alert(data.message || "Có lỗi xảy ra khi gửi bình luận.");
+                }
+            })
+            .catch(err => {
+                console.error("Lỗi gửi comment:", err);
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            });
         }
 
         function showReplyForm(commentId) {
@@ -244,122 +250,24 @@
     </script>
 
     <style>
-        .rounded-4 {
-            border-radius: 1rem !important;
-        }
+        .rounded-4 { border-radius: 1rem !important; }
+        .active-lesson { background-color: #f0f7ff !important; border-left: 5px solid #0d6efd !important; }
+        .tiny { font-size: 0.7rem; }
+        .leading-relaxed { line-height: 1.6; }
+        .scroll-sidebar::-webkit-scrollbar { width: 5px; }
+        .scroll-sidebar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
 
-        .active-lesson {
-            background-color: #f0f7ff !important;
-            border-left: 5px solid #0d6efd !important;
-        }
-
-        .tiny {
-            font-size: 0.7rem;
-        }
-
-        .leading-relaxed {
-            line-height: 1.6;
-        }
-
-        .scroll-sidebar::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .scroll-sidebar::-webkit-scrollbar-thumb {
-            background: #ccc;
-            border-radius: 10px;
-        }
-
-        /* FACEBOOK COMMENT STYLE */
-        .fb-bubble {
-            background-color: #f0f2f5;
-            border-radius: 18px;
-            display: inline-block;
-            max-width: 100%;
-            word-wrap: break-word;
-        }
-
-        /* Màu nền riêng cho comment của Giảng viên */
-        .bg-lecturer {
-            background-color: #e7f3ff !important;
-            border: 1px solid #cce4ff !important;
-        }
-
-        .fb-input {
-            background-color: #f0f2f5;
-            border: none !important;
-            border-radius: 20px !important;
-            padding-right: 65px !important;
-            resize: none;
-            overflow: hidden;
-        }
-
-        .fb-actions, .fb-actions-small {
-            position: absolute;
-            bottom: 8px;
-            right: 15px;
-            display: flex;
-            align-items: center;
-        }
-
-        .img-comment {
-            border-radius: 12px;
-            margin-top: 6px;
-            display: block;
-            max-width: 300px;
-            cursor: pointer;
-            border: 1px solid #ddd;
-        }
-
-        .reply-img {
-            max-width: 250px;
-        }
-
-        .btn-send-fb {
-            background: none;
-            border: none;
-            color: #0d6efd;
-            padding: 0;
-        }
-
-        .btn-send-fb:disabled {
-            color: #ccc;
-            cursor: not-allowed;
-        }
-
-        .btn-remove-preview {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #dc3545;
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            cursor: pointer;
-        }
-
-        .cursor-pointer {
-            cursor: pointer;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-5px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-fadeIn {
-            animation: fadeIn 0.2s ease;
-        }
+        .fb-bubble { background-color: #f0f2f5; border-radius: 18px; display: inline-block; max-width: 100%; word-wrap: break-word; }
+        .bg-lecturer { background-color: #e7f3ff !important; border: 1px solid #cce4ff !important; }
+        .fb-input { background-color: #f0f2f5; border: none !important; border-radius: 20px !important; padding-right: 65px !important; resize: none; overflow: hidden; }
+        .fb-actions, .fb-actions-small { position: absolute; bottom: 8px; right: 15px; display: flex; align-items: center; }
+        .img-comment { border-radius: 12px; margin-top: 6px; display: block; max-width: 300px; cursor: pointer; border: 1px solid #ddd; }
+        .reply-img { max-width: 250px; }
+        .btn-send-fb { background: none; border: none; color: #0d6efd; padding: 0; }
+        .btn-send-fb:disabled { color: #ccc; cursor: not-allowed; }
+        .btn-remove-preview { position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; }
+        .cursor-pointer { cursor: pointer; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fadeIn { animation: fadeIn 0.2s ease; }
     </style>
 {% endblock %}
