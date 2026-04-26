@@ -249,6 +249,8 @@ def load_courses():
     level = request.args.get('level')
 
     courses = utils.load_courses(kw, category_id, lecturer_id, goal, level)
+    print(courses)
+    print("aaaaaaaaa")
     categories = utils.load_categories()
     lecturers = utils.load_lecturers()
 
