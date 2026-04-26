@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block title %}Lộ trình học tập{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5 learning-path-page">
+    <div class="learning-path-hero mb-4">
+        <div>
+            <h1 class="fw-bold mb-2">Lộ trình học tập cá nhân hóa</h1>
+            {% if roadmap.student %}
+            <p class="text-muted mb-0">
+                Đề xuất dành riêng cho bạn dựa trên mục tiêu
+                <strong>{{ roadmap.student.goal.value }}</strong>
+                và trình độ
+                <strong>{{ roadmap.student.level.value }}</strong>.
+            </p>
+            {% endif %}
+        </div>
+        {% if smart_target %}
+        {% if smart_target.first_lesson %}
+        <a href="{{ url_for('learning', course_id=smart_target.course.id, lesson_id=smart_target.first_lesson.id) }}"
+           class="btn btn-light rounded-pill px-4 py-2 fw-bold shadow-sm">
+            <i class="fa-solid fa-wand-magic-sparkles me-2 text-primary"></i>Gợi ý thông minh
+        </a>
+        {% else %}
+        <a href="{{ url_for('course_detail', course_id=smart_target.course.id) }}"
+           class="btn btn-light rounded-pill px-4 py-2 fw-bold shadow-sm">
+            <i class="fa-solid fa-wand-magic-sparkles me-2 text-primary"></i>Gợi ý thông minh
+        </a>
+        {% endif %}
+        {% else %}
+        <a href="{{ url_for('load_courses') }}"
+           class="btn btn-light rounded-pill px-4 py-2 fw-bold shadow-sm">
+            <i class="fa-solid fa-wand-magic-sparkles me-2 text-primary"></i>Gợi ý thông minh
+        </a>
+        {% endif %}
+    </div>
+
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h3 class="fw-bold mb-1">Tiếp tục học</h3>
+                <p class="text-muted mb-0">Các khóa học bạn đang học dở và nên quay lại ngay.</p>
+            </div>
+        </div>
+
+        {% if roadmap.continue_courses %}
+        <div class="row g-4">
+            {% for item in roadmap.continue_courses %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card learning-path-card h-100 border-0 shadow-sm rounded-4">
+                    <img src="{{ item.course.image }}" class="card-img-top" alt="{{ item.course.title }}" style="height: 200px; object-fit: cover;">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-primary-soft text-primary rounded-pill px-3 py-2">
+                                {{ item.course.category.name if item.course.category else 'Khóa học' }}
+                            </span>
+                            <span class="recommend-score">{{ item.score }}đ</span>
+                        </div>
+
+                        <h5 class="fw-bold mb-2">{{ item.course.title }}</h5>
+                        <p class="text-muted small mb-3">
+                            Giảng viên: {{ item.course.lecturer.first_name }} {{ item.course.lecturer.last_name }}
+                        </p>
+
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="mini-chip">
+                                <i class="fa-solid fa-bullseye me-1"></i>{{ item.course.goal.value }}
+                            </span>
+                            <span class="mini-chip">
+                                <i class="fa-solid fa-chart-simple me-1"></i>{{ item.course.level.value }}
+                            </span>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="small text-muted fw-medium">Tiến độ</span>
+                                <span class="small fw-bold text-success">{{ item.progress_percent }}%</span>
+                            </div>
+                            <div class="progress progress-thin">
+                                <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                                     role="progressbar"
+                                     style="width: {{ item.progress_percent }}%"
+                                     aria-valuenow="{{ item.progress_percent }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"></div>
+                            </div>
+                            <div class="text-end mt-1">
+                                <span class="tiny text-muted">{{ item.completed_lessons }}/{{ item.total_lessons }} bài học</span>
+                            </div>
+                        </div>
+
+                        <div class="recommend-reasons mb-4">
+                            {% for reason in item.reasons %}
+                            <div class="recommend-reason-item">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span>{{ reason }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        {% if item.first_lesson %}
+                        <a href="{{ url_for('learning', course_id=item.course.id, lesson_id=item.first_lesson.id) }}"
+                           class="btn btn-success rounded-3 py-2 fw-bold mt-auto">
+                            <i class="fa-solid fa-play me-2"></i>Học tiếp ngay
+                        </a>
+                        {% else %}
+                        <button class="btn btn-secondary rounded-3 py-2 fw-bold mt-auto" disabled>
+                            Chưa có bài học
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-learning-box">
+            <i class="fa-solid fa-book-open-reader"></i>
+            <h5 class="fw-bold mt-3">Bạn chưa có khóa học đang học dở</h5>
+            <p class="text-muted mb-3">Hãy chọn một khóa học phù hợp bên dưới để bắt đầu lộ trình của bạn.</p>
+            <a href="{{ url_for('load_courses') }}" class="btn btn-primary rounded-3 px-4">Khám phá khóa học</a>
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="mb-5">
+        <div class="mb-3">
+            <h3 class="fw-bold mb-1">Phù hợp nhất cho bạn</h3>
+            <p class="text-muted mb-0">Các khóa học khớp với mục tiêu và trình độ hiện tại.</p>
+        </div>
+
+        {% if roadmap.recommended_courses %}
+        <div class="row g-4">
+            {% for item in roadmap.recommended_courses %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card learning-path-card h-100 border-0 shadow-sm rounded-4">
+                    <img src="{{ item.course.image }}" class="card-img-top" alt="{{ item.course.title }}" style="height: 200px; object-fit: cover;">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-primary-soft text-primary rounded-pill px-3 py-2">
+                                {{ item.course.category.name if item.course.category else 'Khóa học' }}
+                            </span>
+                            <span class="recommend-score">{{ item.score }}đ</span>
+                        </div>
+
+                        <h5 class="fw-bold mb-2">{{ item.course.title }}</h5>
+                        <p class="text-muted small mb-3 course-desc-2line">{{ item.course.description }}</p>
+
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="mini-chip">
+                                <i class="fa-solid fa-bullseye me-1"></i>{{ item.course.goal.value }}
+                            </span>
+                            <span class="mini-chip">
+                                <i class="fa-solid fa-chart-simple me-1"></i>{{ item.course.level.value }}
+                            </span>
+                            <span class="mini-chip price-chip">
+                                <i class="fa-solid fa-tag me-1"></i>{{ '{:,.0f}'.format(item.course.price) }} VNĐ
+                            </span>
+                        </div>
+
+                        <div class="recommend-reasons mb-4">
+                            {% for reason in item.reasons %}
+                            <div class="recommend-reason-item">
+                                <i class="fa-solid fa-sparkles"></i>
+                                <span>{{ reason }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <a href="{{ url_for('course_detail', course_id=item.course.id) }}"
+                           class="btn btn-primary rounded-3 py-2 fw-bold mt-auto">
+                            <i class="fa-solid fa-eye me-2"></i>Xem chi tiết
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-learning-box">
+            <i class="fa-solid fa-lightbulb"></i>
+            <h5 class="fw-bold mt-3">Chưa có đề xuất phù hợp hoàn toàn</h5>
+            <p class="text-muted mb-0">Hệ thống sẽ đề xuất tốt hơn khi có thêm nhiều khóa học và dữ liệu học tập hơn.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <section>
+        <div class="mb-3">
+            <h3 class="fw-bold mb-1">Bước tiếp theo</h3>
+            <p class="text-muted mb-0">Các khóa học nâng cấp sau khi bạn hoàn thành nền tảng hiện tại.</p>
+        </div>
+
+        {% if roadmap.next_courses %}
+        <div class="row g-4">
+            {% for item in roadmap.next_courses %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card next-step-card h-100 border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="next-step-icon mb-3">
+                            <i class="fa-solid fa-stairs"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">{{ item.course.title }}</h5>
+                        <p class="text-muted small mb-3 course-desc-2line">{{ item.course.description }}</p>
+
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="mini-chip">
+                                {{ item.course.goal.value }}
+                            </span>
+                            <span class="mini-chip">
+                                {{ item.course.level.value }}
+                            </span>
+                        </div>
+
+                        <div class="recommend-reasons mb-4">
+                            {% for reason in item.reasons[:2] %}
+                            <div class="recommend-reason-item">
+                                <i class="fa-solid fa-arrow-trend-up"></i>
+                                <span>{{ reason }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <a href="{{ url_for('course_detail', course_id=item.course.id) }}"
+                           class="btn btn-outline-primary rounded-3 py-2 fw-bold mt-auto">
+                            Tìm hiểu thêm
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-learning-box small-empty-box">
+            <i class="fa-solid fa-road"></i>
+            <h5 class="fw-bold mt-3">Chưa có bước tiếp theo</h5>
+            <p class="text-muted mb-0">Khi hệ thống có thêm khóa học nâng cao, mục này sẽ được cập nhật.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
+
+
+{% set smart_target = None %}
+
+{% if roadmap.continue_courses and roadmap.continue_courses|length > 0 %}
+    {% set smart_target = roadmap.continue_courses[0] %}
+{% elif roadmap.recommended_courses and roadmap.recommended_courses|length > 0 %}
+    {% set smart_target = roadmap.recommended_courses[0] %}
+{% elif roadmap.next_courses and roadmap.next_courses|length > 0 %}
+    {% set smart_target = roadmap.next_courses[0] %}
+{% endif %}

@@ -329,7 +329,7 @@ def build_learning_path(student_id):
 
     progress_map = {}
     for course in all_courses:
-        total_lessons, completed_lessons, progress_percent = calculatecourseprogress(student_id, course.id)
+        total_lessons, completed_lessons, progress_percent = calculate_course_progress(student_id, course.id)
         progress_map[course.id] = progress_percent
 
     continue_courses = []
@@ -339,7 +339,7 @@ def build_learning_path(student_id):
     for course in all_courses:
         score, reasons = score_course_for_student(student, course, enrolled_ids, progress_map)
         first_lesson = get_first_lesson(course)
-        total_lessons, completed_lessons, progress_percent = calculatecourseprogress(student_id, course.id)
+        total_lessons, completed_lessons, progress_percent = calculate_course_progress(student_id, course.id)
 
         item = {
             "course": course,
