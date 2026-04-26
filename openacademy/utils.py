@@ -239,3 +239,133 @@ def load_my_courses(student_id, kw=None):
         c.progress_percent = overall_percent
 
     return courses
+
+def level_rank(level):
+    order = {
+        StudentLevel.BEGINNER: 1,
+        StudentLevel.INTERMEDIATE: 2,
+        StudentLevel.ADVANCED: 3,
+        StudentLevel.EXPERT: 4
+    }
+    return order.get(level, 0)
+
+
+def get_first_lesson(course):
+    if not course or not course.sections:
+        return None
+
+    sorted_sections = sorted(course.sections, key=lambda s: s.id)
+    for section in sorted_sections:
+        if section.lessons:
+            sorted_lessons = sorted(section.lessons, key=lambda l: l.order_index)
+            if sorted_lessons:
+                return sorted_lessons[0]
+
+    return None
+
+
+def score_course_for_student(student, course, enrolled_ids, progress_map):
+    score = 0
+    reasons = []
+
+    if course.goal == student.goal:
+        score += 40
+        reasons.append("Phù hợp mục tiêu học tập của bạn")
+
+    student_level_rank = level_rank(student.level)
+    course_level_rank = level_rank(course.level)
+    diff = course_level_rank - student_level_rank
+
+    if diff == 0:
+        score += 30
+        reasons.append("Đúng với trình độ hiện tại")
+    elif diff == 1:
+        score += 20
+        reasons.append("Phù hợp để học tiếp sau khi nắm nền tảng")
+    elif diff > 1:
+        score -= 20
+        reasons.append("Khóa học này có thể hơi khó ở thời điểm hiện tại")
+    else:
+        score += 10
+        reasons.append("Phù hợp để ôn lại kiến thức nền tảng")
+
+    if course.price == 0:
+        score += 5
+        reasons.append("Có thể bắt đầu ngay miễn phí")
+
+    if course.id in enrolled_ids:
+        percent = progress_map.get(course.id, 0)
+        if 0 < percent < 100:
+            score += 50
+            reasons.append("Bạn đang học dở khóa này")
+        elif percent >= 100:
+            score -= 100
+            reasons.append("Bạn đã hoàn thành khóa này")
+        else:
+            score += 15
+            reasons.append("Bạn đã đăng ký khóa học này")
+
+    return score, reasons
+
+
+def build_learning_path(student_id):
+    student = Student.query.get(student_id)
+    if not student:
+        return {
+            "student": None,
+            "continue_courses": [],
+            "recommended_courses": [],
+            "next_courses": []
+        }
+
+    all_courses = Course.query.options(
+        joinedload(Course.category),
+        joinedload(Course.lecturer),
+        joinedload(Course.sections).joinedload(Section.lessons)
+    ).all()
+
+    enrollments = Enrollment.query.filter_by(student_id=student_id).all()
+    enrolled_ids = {e.course_id for e in enrollments}
+
+    progress_map = {}
+    for course in all_courses:
+        total_lessons, completed_lessons, progress_percent = calculatecourseprogress(student_id, course.id)
+        progress_map[course.id] = progress_percent
+
+    continue_courses = []
+    recommended_courses = []
+    next_courses = []
+
+    for course in all_courses:
+        score, reasons = score_course_for_student(student, course, enrolled_ids, progress_map)
+        first_lesson = get_first_lesson(course)
+        total_lessons, completed_lessons, progress_percent = calculatecourseprogress(student_id, course.id)
+
+        item = {
+            "course": course,
+            "score": score,
+            "reasons": reasons[:3],
+            "progress_percent": progress_percent,
+            "total_lessons": total_lessons,
+            "completed_lessons": completed_lessons,
+            "first_lesson": first_lesson
+        }
+
+        if course.id in enrolled_ids and 0 < progress_percent < 100:
+            continue_courses.append(item)
+        elif course.id not in enrolled_ids:
+            if course.goal == student.goal and course.level == student.level:
+                recommended_courses.append(item)
+            elif level_rank(course.level) == level_rank(student.level) + 1:
+                next_courses.append(item)
+
+    continue_courses.sort(key=lambda x: (-x["score"], -x["progress_percent"], x["course"].id))
+    recommended_courses.sort(key=lambda x: (-x["score"], x["course"].price, x["course"].id))
+    next_courses.sort(key=lambda x: (-x["score"], x["course"].price, x["course"].id))
+
+    return {
+        "student": student,
+        "continue_courses": continue_courses[:3],
+        "recommended_courses": recommended_courses[:6],
+        "next_courses": next_courses[:4]
+    }

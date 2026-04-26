@@ -13,6 +13,8 @@ from openacademy.utils import add_lecturer, add_student, vnpay
 from openacademy.models import Enrollment, db
 from flask_login import current_user
 
+
+
 @app.route('/')
 def home():
     return render_template('login.html')
@@ -176,6 +178,16 @@ def load_my_courses():
     courses = utils.load_my_courses(current_user.id, kw)
 
     return render_template('my_courses.html', courses=courses)
+
+@app.route('/learning-path', methods=['GET'])
+@login_required
+def learning_path():
+    if current_user.role != UserRole.STUDENT:
+        return redirect(url_for('home'))
+
+    roadmap = utils.build_learning_path(current_user.id)
+    return render_template('learning_path.html', roadmap=roadmap)
+
 
 @app.route('/courses/<int:course_id>')
 def course_detail(course_id):
