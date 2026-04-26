@@ -54,7 +54,7 @@ def login_google(role='STUDENT'):
     local_flow = Flow.from_client_config(
         client_config,
         scopes=GOOGLE_SCOPES,
-        redirect_uri="http://127.0.0.1:5000/callback"
+        redirect_uri="https://open-academy.onrender.com/callback"
     )
 
     code_verifier = secrets.token_urlsafe(64)
