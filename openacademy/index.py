@@ -19,7 +19,7 @@ from openacademy.utils import add_lecturer, add_student, vnpay
 load_dotenv()
 
 # Lấy cấu hình Google từ biến môi trường
-GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID') # Thêm dòng này để callback không bị lỗi
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 client_secret_env = os.getenv('GOOGLE_CLIENT_SECRET_JSON')
 client_config = json.loads(client_secret_env) if client_secret_env else None
 
@@ -30,9 +30,6 @@ GOOGLE_SCOPES = [
     "openid"
 ]
 
-with app.app_context():
-    db.create_all()
-    print(">>> Hệ thống: Đã kiểm tra và tạo bảng thành công trên TiDB!")
 
 # Đăng nhập, đăng ký
 
@@ -59,7 +56,7 @@ def login_google(role='STUDENT'):
     local_flow = Flow.from_client_config(
         client_config,
         scopes=GOOGLE_SCOPES,
-        redirect_uri="https://open-academy.onrender.com/callback"
+        redirect_uri=os.getenv('REDIRECT_URL')
     )
 
     code_verifier = secrets.token_urlsafe(64)
@@ -92,7 +89,7 @@ def callback():
         client_config,
         scopes=GOOGLE_SCOPES,
         state=state,
-        redirect_uri="https://open-academy.onrender.com/callback"
+        redirect_uri=os.getenv('REDIRECT_URL')
     )
     local_flow.code_verifier = cv
 
