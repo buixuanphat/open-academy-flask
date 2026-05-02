@@ -50,5 +50,4 @@ def create_app(config_name='development'):
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
     app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
 
-    from openacademy import index
     return app
