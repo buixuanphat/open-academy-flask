@@ -5,21 +5,35 @@ import base64
 from datetime import datetime
 import json
 from dotenv import load_dotenv
-from flask import render_template, request, redirect, url_for, flash, session, abort, jsonify
+
+from flask import render_template, request, redirect, url_for, flash, session, abort, jsonify, current_app
 from flask_login import login_user, logout_user, login_required, current_user
+
 from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport import requests as google_requests
-import cloudinary.uploader
-from openacademy import app, utils, models, login, db, VNPAY_TMN_CODE, VNPAY_RETURN_URL, VNPAY_PAYMENT_URL, VNPAY_HASH_SECRET
-from openacademy.models import UserRole, Course, Lesson, Category, StudyGoal, StudentLevel, CourseStatus, Section, Enrollment
+
+from openacademy import db, login, create_app
+import openacademy.utils as utils
+import openacademy.models as models
+
+from openacademy.models import (
+    UserRole, Course, Lesson, Category,
+    StudyGoal, StudentLevel, CourseStatus,
+    Section, Enrollment
+)
+
 from openacademy.utils import add_lecturer, add_student, vnpay
+
+
+app = create_app()
+
 
 # Tải biến môi trường từ .env
 load_dotenv()
 
 # Lấy cấu hình Google từ biến môi trường
-GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID') # Thêm dòng này để callback không bị lỗi
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 client_secret_env = os.getenv('GOOGLE_CLIENT_SECRET_JSON')
 client_config = json.loads(client_secret_env) if client_secret_env else None
 
@@ -30,9 +44,6 @@ GOOGLE_SCOPES = [
     "openid"
 ]
 
-with app.app_context():
-    db.create_all()
-    print(">>> Hệ thống: Đã kiểm tra và tạo bảng thành công trên TiDB!")
 
 # Đăng nhập, đăng ký
 
@@ -59,7 +70,7 @@ def login_google(role='STUDENT'):
     local_flow = Flow.from_client_config(
         client_config,
         scopes=GOOGLE_SCOPES,
-        redirect_uri="https://open-academy.onrender.com/callback"
+        redirect_uri=os.getenv('REDIRECT_URL')
     )
 
     code_verifier = secrets.token_urlsafe(64)
@@ -92,7 +103,7 @@ def callback():
         client_config,
         scopes=GOOGLE_SCOPES,
         state=state,
-        redirect_uri="https://open-academy.onrender.com/callback"
+        redirect_uri=os.getenv('REDIRECT_URL')
     )
     local_flow.code_verifier = cv
 
@@ -343,13 +354,13 @@ def payment():
     amount = int(float(request.form.get('amount'))) * 100
     vnp_pay = vnpay()
     vnp_pay.request_data.update({
-        'vnp_Version': '2.1.0', 'vnp_Command': 'pay', 'vnp_TmnCode': VNPAY_TMN_CODE,
+        'vnp_Version': '2.1.0', 'vnp_Command': 'pay', 'vnp_TmnCode': current_app.config['VNPAY_TMN_CODE'],
         'vnp_Amount': amount, 'vnp_CurrCode': 'VND', 'vnp_TxnRef': f"{course_id}-{datetime.now().strftime('%H%M%S')}",
         'vnp_OrderInfo': request.form.get('order_desc'), 'vnp_OrderType': 'billpayment',
         'vnp_Locale': 'vn', 'vnp_CreateDate': datetime.now().strftime('%Y%m%d%H%M%S'),
-        'vnp_IpAddr': request.remote_addr, 'vnp_ReturnUrl': VNPAY_RETURN_URL
+        'vnp_IpAddr': request.remote_addr, 'vnp_ReturnUrl': current_app.config['VNPAY_RETURN_URL']
     })
-    return redirect(vnp_pay.get_payment_url(VNPAY_PAYMENT_URL, VNPAY_HASH_SECRET))
+    return redirect(vnp_pay.get_payment_url(current_app.config['VNPAY_PAYMENT_URL'], current_app.config['VNPAY_HASH_SECRET']))
 
 
 @app.route('/payment_return')
@@ -357,7 +368,7 @@ def payment():
 def payment_return():
     vnp_pay = vnpay()
     vnp_pay.response_data = request.args.to_dict()
-    if vnp_pay.validate_response(VNPAY_HASH_SECRET) and vnp_pay.response_data['vnp_ResponseCode'] == '00':
+    if vnp_pay.validate_response(current_app.config['VNPAY_HASH_SECRET']) and vnp_pay.response_data['vnp_ResponseCode'] == '00':
         course_id = int(vnp_pay.response_data['vnp_TxnRef'].split('-')[0])
         if not Enrollment.query.filter_by(student_id=current_user.id, course_id=course_id).first():
             db.session.add(Enrollment(student_id=current_user.id, course_id=course_id,

@@ -1,38 +1,54 @@
-
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import cloudinary
 from flask_login import LoginManager
-
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'jbcvlgerljblgviyfihuewlfjsdv'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://4CCvs9sf8gjYoXM.root:iR1UeuaX8zThkwil@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/test?ssl_ca=/etc/ssl/certs/ca-certificates.crt'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
-
-db = SQLAlchemy(app=app)
-
-cloudinary.config(
-    cloud_name='dnbno2tkc',
-    api_key='896257422881191',
-    api_secret='X6BnafHH4o_-bojDL2gPXzPHQDE'
-)
-
-login = LoginManager(app=app)
-
-VNPAY_TMN_CODE = 'Z5IJKQGT'
-VNPAY_HASH_SECRET = 'DHI759AV08T7N8188OECPJ1XLUCCUE8E'
-VNPAY_PAYMENT_URL = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'
-VNPAY_RETURN_URL = 'https://open-academy.onrender.com/payment_return'
-
-from . import admin
-
-
 import os
-from google_auth_oauthlib.flow import Flow
+from dotenv import load_dotenv
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CLIENT_SECRETS_FILE = os.path.join(BASE_DIR, "client_secret.json")
+load_dotenv()
 
-GOOGLE_CLIENT_ID = "466909840388-7d6tnnjremfnadn2dk5s91drjcq428n8.apps.googleusercontent.com"
+db = SQLAlchemy()
+login = LoginManager()
 
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+
+def create_app(config_name='development'):
+    app = Flask(__name__)
+
+    app.config['SECRET_KEY'] = 'jbcvlgerljblgviyfihuewlfjsdv'
+
+    # chọn DB theo môi trường
+    if config_name == 'testing':
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+
+        if os.getenv('USE_SSL') == 'True':
+            ca_path = os.path.join(os.path.dirname(__file__), 'isrgrootx1.pem')
+            app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+                "connect_args": {"ssl": {"ca": ca_path}}
+            }
+
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+
+    db.init_app(app)
+    login.init_app(app)
+
+
+    cloudinary.config(
+        cloud_name=os.getenv('CLOUDINARY_NAME'),
+        api_key=os.getenv('CLOUDINARY_API_KEY'),
+        api_secret=os.getenv('CLOUDINARY_API_SECRET')
+    )
+
+
+    app.config['VNPAY_TMN_CODE'] = os.getenv('VNPAY_TMN_CODE')
+    app.config['VNPAY_HASH_SECRET'] = os.getenv('VNPAY_HASH_SECRET')
+    app.config['VNPAY_RETURN_URL'] = os.getenv('VNPAY_RETURN_URL')
+    app.config['VNPAY_PAYMENT_URL'] = os.getenv('VNPAY_PAYMENT_URL')
+
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+    app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
+
+    from openacademy import index
+    return app
