@@ -1,4 +1,5 @@
-from openacademy import app, db
+from openacademy import db, create_app
+app = create_app()
 from openacademy.models import (
     UserRole, StudyGoal, StudentLevel, Status, CourseStatus,
     User, Lecturer, Student, Admin, Category, Course,

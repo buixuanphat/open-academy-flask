@@ -396,3 +396,81 @@ def get_lecturer_comments(lecturer_id):
         .filter(Course.lecturer_id == lecturer_id)\
         .order_by(desc(Comment.created_date))\
         .all()
+
+# ==================== ROADMAP ====================
+
+def get_roadmap(student_id):
+    student = Student.query.get(student_id)
+    if not student:
+        return None
+
+    all_courses = Course.query.filter(
+        Course.status == CourseStatus.ACTIVE,
+        Course.goal == student.goal
+    ).all()
+
+    enrolled_ids = [e.course_id for e in student.enrollments]
+
+    level_order = [
+        StudentLevel.BEGINNER,
+        StudentLevel.INTERMEDIATE,
+        StudentLevel.ADVANCED,
+        StudentLevel.EXPERT
+    ]
+
+    roadmap_steps = []
+    prev_step_finished = True  # Bước đầu luôn mở
+
+    for idx, level in enumerate(level_order):
+        courses_in_level = [c for c in all_courses if c.level == level]
+        if not courses_in_level:
+            continue
+
+        step_courses = []
+        for course in courses_in_level:
+            is_enrolled = course.id in enrolled_ids
+            total, completed, percent = 0, 0, 0
+            if is_enrolled:
+                total, completed, percent = calculate_course_progress(student_id, course.id)
+
+            enrollment = Enrollment.query.filter_by(
+                student_id=student_id,
+                course_id=course.id
+            ).first()
+            is_finished = enrollment.finish if enrollment else False
+
+            step_courses.append({
+                'course': course,
+                'is_enrolled': is_enrolled,
+                'is_finished': is_finished,
+                'progress': percent
+            })
+
+        all_finished = all(c['is_finished'] for c in step_courses)
+        any_enrolled = any(c['is_enrolled'] for c in step_courses)
+
+        if all_finished:
+            status = 'completed'
+        elif any_enrolled:
+            status = 'in_progress'
+        elif prev_step_finished:
+            status = 'available'
+        else:
+            status = 'locked'
+
+        roadmap_steps.append({
+            'step': idx + 1,
+            'level': level,
+            'level_name': level.value,
+            'courses': step_courses,
+            'status': status,
+            'all_finished': all_finished
+        })
+
+        prev_step_finished = all_finished
+
+    return {
+        'student': student,
+        'goal_name': student.goal.value,
+        'steps': roadmap_steps
+    }

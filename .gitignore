@@ -17,3 +17,6 @@ instance/
 
 openacademy/client_secret.json
 
+run.py
+run_seed.py
+.venv/
