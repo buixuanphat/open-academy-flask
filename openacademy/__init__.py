@@ -5,6 +5,7 @@ from flask_login import LoginManager
 import os
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 db = SQLAlchemy()
@@ -33,6 +34,9 @@ def create_app(config_name='development'):
 
     db.init_app(app)
     login.init_app(app)
+
+    from openacademy.admin import admin
+    admin.init_app(app)
 
 
     cloudinary.config(

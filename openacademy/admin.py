@@ -1,4 +1,4 @@
-from openacademy import app, db, utils
+from openacademy import db, utils
 from flask import request, redirect, url_for, flash
 from flask_admin import Admin, BaseView, expose, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
@@ -57,7 +57,7 @@ class CourseModelView(AuthenticatedModelView):
     # Tích hợp CKEditor cho mô tả khóa học
     extra_js = [
         'https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js',
-        '/static/js/admin_ckeditor_config.js'  
+        '/static/js/admin_ckeditor_config.js'
     ]
     form_overrides = {'description': CKTextAreaField}
 
@@ -110,7 +110,7 @@ class LogoutView(AuthenticatedView):
 
 
 
-admin = Admin(app=app, name='OpenAcademy Administrator', index_view=MyAdminIndexView())
+admin = Admin(name='OpenAcademy Administrator', index_view=MyAdminIndexView())
 
 admin.add_view(UserModelView(User, db.session, name='Người dùng'))
 admin.add_view(AuthenticatedModelView(Category, db.session, name='Danh mục'))

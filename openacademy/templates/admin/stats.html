@@ -1,35 +1,49 @@
-{% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
+{% extends 'admin/master.html' %}
 
-{% block content %}
-<div class="container py-5" style="max-width: 1000px; color: #333;">
+{% block head %}
+    {{ super() }}
+    <style>
+        .stats-container { color: #333; }
+        .form-control-custom { background-color: #f8f9fa; border: none; border-radius: 4px; }
+        .form-control-custom:focus { background-color: #fff; box-shadow: 0 0 0 2px rgba(0,0,0,0.05); }
+        .table-borderless-custom tbody tr { border-bottom: 1px solid #f0f0f0; transition: background 0.2s; }
+        .table-borderless-custom tbody tr:hover { background-color: #fcfcfc; }
+        .btn-dark-custom { background-color: #222; border: none; color: white; padding: 0.5rem 1rem; transition: 0.3s; }
+        .btn-dark-custom:hover { background-color: #000; transform: translateY(-1px); color: white; }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="stats-container p-3">
     <div class="d-flex justify-content-between align-items-end mb-5">
         <div>
             <h2 class="fw-light mb-1">Thống kê doanh thu</h2>
+            <p class="text-muted small">Báo cáo chi tiết theo từng khóa học</p>
         </div>
         <div class="text-end">
-            <span class="text-muted small text-uppercase">Tổng cộng</span>
+            <span class="text-muted small text-uppercase">Tổng cộng doanh thu</span>
             <h3 class="fw-bold text-primary">{{ "{:,.0f}".format(total_rev) }} <small style="font-size: 0.6em;">VNĐ</small></h3>
         </div>
     </div>
 
+    {# Form lọc dữ liệu - Flask-Admin xử lý GET tốt nhất qua form này #}
     <form method="GET" class="row g-2 mb-5">
         <div class="col-md-5">
-            <input type="text" name="kw" placeholder="Tìm tên khóa học..." class="form-control form-control-sm border-0 bg-light px-3" />
+            <input type="text" name="kw" value="{{ request.args.get('kw', '') }}" placeholder="Tìm tên khóa học..." class="form-control form-control-sm form-control-custom px-3" />
         </div>
         <div class="col-md-2">
-            <input type="date" name="from_date" class="form-control form-control-sm border-0 bg-light" title="Từ ngày" />
+            <input type="date" name="from_date" value="{{ request.args.get('from_date', '') }}" class="form-control form-control-sm form-control-custom" title="Từ ngày" />
         </div>
         <div class="col-md-2">
-            <input type="date" name="to_date" class="form-control form-control-sm border-0 bg-light" title="Đến ngày" />
+            <input type="date" name="to_date" value="{{ request.args.get('to_date', '') }}" class="form-control form-control-sm form-control-custom" title="Đến ngày" />
         </div>
         <div class="col-md-3">
-            <button type="submit" class="btn btn-dark btn-sm w-100 shadow-sm">Lọc dữ liệu</button>
+            <button type="submit" class="btn btn-dark-custom btn-sm w-100 shadow-sm">Lọc dữ liệu</button>
         </div>
     </form>
 
-    <div class="table-responsive">
-        <table class="table table-borderless align-middle">
+    <div class="table-responsive bg-white rounded shadow-sm p-3">
+        <table class="table table-borderless-custom align-middle">
             <thead>
                 <tr class="text-muted small border-bottom">
                     <th class="pb-3" style="width: 10%;">ID</th>
@@ -39,27 +53,24 @@
                 </tr>
             </thead>
             <tbody>
-                {% for s in stats %}
-                <tr class="border-bottom-subtle">
-                    <td class="py-3 text-muted">#{{ s[0] }}</td>
-                    <td class="py-3 fw-medium">{{ s[1] }}</td>
-                    <td class="py-3">{{ "{:,.0f}".format(s[2]) }}</td>
-                    <td class="py-3 text-end">
-                        <span class="badge bg-light text-dark fw-normal border">{{ s[3] }}</span>
-                    </td>
-                </tr>
-                {% endfor %}
+                {% if stats %}
+                    {% for s in stats %}
+                    <tr>
+                        <td class="py-3 text-muted">#{{ s[0] }}</td>
+                        <td class="py-3 fw-medium">{{ s[1] }}</td>
+                        <td class="py-3 text-success fw-bold">{{ "{:,.0f}".format(s[2]) }}</td>
+                        <td class="py-3 text-end">
+                            <span class="badge bg-light text-dark fw-normal border px-3">{{ s[3] }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">Không tìm thấy dữ liệu phù hợp.</td>
+                    </tr>
+                {% endif %}
             </tbody>
         </table>
     </div>
 </div>
-
-<style>
-    body { background-color: #fafafa; }
-    .form-control:focus { background-color: #fff; box-shadow: 0 0 0 2px rgba(0,0,0,0.05); }
-    .border-bottom-subtle { border-bottom: 1px solid #f0f0f0; }
-    .table thead th { font-weight: 600; letter-spacing: 0.5px; }
-    .btn-dark { background-color: #222; border: none; transition: 0.3s; }
-    .btn-dark:hover { background-color: #000; transform: translateY(-1px); }
-</style>
 {% endblock %}

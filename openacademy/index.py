@@ -26,6 +26,7 @@ from openacademy.models import (
 from openacademy.utils import add_lecturer, add_student, vnpay
 
 
+
 app = create_app()
 
 
