@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Lộ trình học tập{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+
+    <!-- HEADER -->
+    <div class="mb-5">
+        <h2 class="fw-bold">Lộ trình học tập của tôi</h2>
+        <p class="text-muted fs-5 mt-2">
+            Mục tiêu: <strong class="text-primary">{{ data.goal_name }}</strong>
+            &nbsp;•&nbsp;
+            Trình độ hiện tại: <strong>{{ data.student.level.value }}</strong>
+        </p>
+    </div>
+
+    {% if not data.steps %}
+    <div class="alert alert-info rounded-4 p-4">
+        <i class="fa-solid fa-circle-info me-2"></i>
+        Hiện chưa có khóa học nào phù hợp với mục tiêu của bạn. Hãy quay lại sau!
+    </div>
+    {% endif %}
+
+    <!-- ROADMAP -->
+    <div class="position-relative">
+        {% for step in data.steps %}
+
+        <!-- CONNECTOR LINE -->
+        {% if not loop.first %}
+        <div class="d-flex justify-content-start ms-4 ps-1">
+            <div style="width: 3px; height: 40px;
+                background: {% if step.status == 'completed' %}#198754
+                {% elif step.status == 'in_progress' %}#0d6efd
+                {% else %}#dee2e6{% endif %};">
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- STEP ROW -->
+        <div class="d-flex align-items-start gap-4 p-4 rounded-4 border mb-0
+            {% if step.status == 'completed' %}border-success bg-white
+            {% elif step.status == 'in_progress' %}border-primary bg-white
+            {% elif step.status == 'available' %}border-warning bg-white
+            {% else %}border-secondary bg-light opacity-75{% endif %}"
+            style="border-width: 2px !important;">
+
+            <!-- BADGE SỐ BƯỚC -->
+            <div class="flex-shrink-0">
+                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold fs-5"
+                    style="width:52px; height:52px;
+                    background: {% if step.status == 'completed' %}#198754
+                    {% elif step.status == 'in_progress' %}#0d6efd
+                    {% elif step.status == 'available' %}#ffc107
+                    {% else %}#dee2e6{% endif %};
+                    color: {% if step.status == 'available' %}#333{% else %}#fff{% endif %};">
+                    {% if step.status == 'completed' %}
+                        <i class="fa-solid fa-check"></i>
+                    {% elif step.status == 'locked' %}
+                        <i class="fa-solid fa-lock" style="color:#999;"></i>
+                    {% else %}
+                        {{ step.step }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- NỘI DUNG BƯỚC -->
+            <div class="flex-grow-1">
+                <!-- Tiêu đề bước -->
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <h5 class="fw-bold mb-0">Bước {{ step.step }}: {{ step.level_name }}</h5>
+                    {% if step.status == 'completed' %}
+                        <span class="badge bg-success rounded-pill">Hoàn thành</span>
+                    {% elif step.status == 'in_progress' %}
+                        <span class="badge bg-primary rounded-pill">Đang học</span>
+                    {% elif step.status == 'available' %}
+                        <span class="badge bg-warning text-dark rounded-pill">Sẵn sàng học</span>
+                    {% else %}
+                        <span class="badge bg-secondary rounded-pill">Chưa mở khóa</span>
+                    {% endif %}
+                    <span class="text-muted small ms-auto">{{ step.courses|length }} khóa học</span>
+                </div>
+
+                <!-- DANH SÁCH KHÓA HỌC -->
+                <div class="d-flex flex-column gap-2">
+                    {% for item in step.courses %}
+                    <div class="d-flex align-items-center gap-3 p-3 rounded-3 border
+                        {% if item.is_finished %}border-success-subtle bg-success-subtle
+                        {% elif item.is_enrolled %}border-primary-subtle bg-primary-subtle
+                        {% else %}bg-light border-0{% endif %}">
+
+                        <!-- Ảnh thumbnail -->
+                        <img src="{{ item.course.image }}"
+                             style="width:64px; height:46px; object-fit:cover; border-radius:8px; flex-shrink:0;">
+
+                        <!-- Thông tin khóa học -->
+                        <div class="flex-grow-1 min-width-0">
+                            <p class="fw-bold mb-0 text-truncate">{{ item.course.title }}</p>
+                            <small class="text-muted">
+                                <i class="fa-regular fa-user me-1"></i>
+                                {{ item.course.lecturer.first_name }} {{ item.course.lecturer.last_name }}
+                                &nbsp;•&nbsp;
+                                {{ "{:,.0f}".format(item.course.price) }} VNĐ
+                            </small>
+
+                            {% if item.is_enrolled %}
+                            <div class="progress mt-2" style="height:5px; border-radius:10px;">
+                                <div class="progress-bar {% if item.is_finished %}bg-success{% else %}bg-primary{% endif %}"
+                                     style="width:{{ item.progress }}%"></div>
+                            </div>
+                            <small class="text-muted">{{ item.progress }}% hoàn thành</small>
+                            {% endif %}
+                        </div>
+
+                        <!-- NÚT HÀNH ĐỘNG -->
+                        <div class="flex-shrink-0 text-end">
+                            {% if item.is_finished %}
+                                <span class="text-success fw-bold small">
+                                    <i class="fa-solid fa-circle-check me-1"></i>Xong
+                                </span>
+                            {% elif item.is_enrolled %}
+                                <a href="{{ url_for('course_detail', course_id=item.course.id) }}"
+                                   class="btn btn-primary btn-sm rounded-pill px-3">
+                                    <i class="fa-solid fa-play me-1"></i>Tiếp tục
+                                </a>
+                            {% elif step.status != 'locked' %}
+                                <a href="{{ url_for('course_detail', course_id=item.course.id) }}"
+                                   class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                    Xem khóa học
+                                </a>
+                            {% else %}
+                                <span class="text-muted small">
+                                    <i class="fa-solid fa-lock"></i>
+                                </span>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                    {% endfor %}
+                </div>
+                <!-- END DANH SÁCH -->
+
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <!-- END ROADMAP -->
+
+    <!-- NÚT QUAY LẠI -->
+    <div class="mt-5">
+        <a href="{{ url_for('load_courses') }}" class="text-decoration-none text-muted">
+            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách khóa học
+        </a>
+    </div>
+
+</div>
+{% endblock %}

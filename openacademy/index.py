@@ -595,6 +595,15 @@ def lesson_comments():
     comments = utils.get_lecturer_comments(lecturer_id=current_user.id)
     return render_template("lecturer/comment.html", comments=comments)
 
+@app.route('/roadmap')
+@login_required
+def roadmap():
+    if current_user.role != UserRole.STUDENT:
+        flash("Chức năng này chỉ dành cho học viên!", "warning")
+        return redirect(url_for('home'))
+    data = utils.get_roadmap(current_user.id)
+    return render_template('roadmap.html', data=data)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
