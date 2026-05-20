@@ -43,7 +43,7 @@ class ModelTestCase(unittest.TestCase):
         db.session.add(s)
         db.session.commit()
 
-        queried_user = User.query.filter_by(email="student@gmail.com").first()
+        queried_user = User.query.filter_by(email="student@gmail.comm").first()
         self.assertIsInstance(queried_user, Student)
         self.assertEqual(queried_user.role, UserRole.STUDENT)
 
