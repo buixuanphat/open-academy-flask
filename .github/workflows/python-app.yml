@@ -28,4 +28,5 @@ jobs:
 
     - name: Run Tests
       run: |
-        python -m openacademy.tests.test
+        python -m openacademy.tests.test_model
+        python -m openacademy.tests.test_controller

@@ -1,4 +1,4 @@
-from openacademy.models import *
+from openacademy.models import Lecturer, UserRole, Student, Course, Enrollment, Status, Degree, Category, CourseStatus, Comment, User, Progress, Lesson, StudentLevel, StudyGoal, Section
 from openacademy import db
 import hashlib
 import hmac

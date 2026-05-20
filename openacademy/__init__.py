@@ -34,6 +34,7 @@ def create_app(config_name='development'):
 
     db.init_app(app)
     login.init_app(app)
+    login.login_view = 'login'
 
     from openacademy.admin import admin
     admin.init_app(app)
@@ -53,5 +54,10 @@ def create_app(config_name='development'):
 
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
     app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
+
+
+    with app.app_context():
+        import openacademy.index as _index
+        _index.init_app(app)
 
     return app

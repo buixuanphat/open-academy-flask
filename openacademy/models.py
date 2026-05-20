@@ -193,9 +193,3 @@ class Degree(BaseModel):
     name = Column(String(50), nullable=False)
     url = Column(String(200), nullable=False)
     lecturer_id = Column(Integer, ForeignKey('lecturer.id'), nullable=False)
-
-
-if __name__ == '__main__':
-    from openacademy import app
-    with app.app_context():
-        db.create_all()
